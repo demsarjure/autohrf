@@ -1,2 +1,3 @@
 # autohrf
-The official repository for the autohrf R package.
+
+Methods written in R for auto tuning of hrf fit parameters with genetic algorithms.
