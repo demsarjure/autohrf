@@ -12,8 +12,8 @@ License: GPL (>=3) + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
-    ez (>= 4.4-0),
+    cowplot (>= 1.1.1),
     ggplot2 (>= 3.3.5),
     gtools (>= 3.9.2),
-    scales (>= 1.1.1)
+    lubridate (>= 1.8.0)
 RoxygenNote: 7.1.2

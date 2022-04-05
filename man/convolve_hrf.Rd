@@ -12,14 +12,14 @@ convolve_hrf(x, hrf)
 \item{hrf}{HRF to convolve the signal with.}
 }
 \value{
-A vector representing a downsampled input signal.
+TODO.
 }
 \description{
 Convolve HRF with a signal.
 }
 \examples{
 # create the HRF
-hrf <- hrf_spm(tr=1)
+hrf <- create_boynton_hrf(tr=1)
 
 # our signal
 x <- sin(1:1000)
