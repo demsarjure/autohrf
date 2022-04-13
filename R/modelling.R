@@ -3,21 +3,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 #' @title run_model
-#' @description TODO.
+#' @description A function for evaluating the model against the data.
 #' @import ggplot2
 #' @export
 #'
-#' @param d TODO.
-#' @param r TODO.
-#' @param model TODO.
-#' @param normalize TODO.
-#' @param report TODO.
+#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.
+#' @param r The output from the convolve_events function.
+#' @param model A data frame containing information about the model to use and its events (event, start_time and duration).
+#' @param normalize Whether to normalize the signal.
+#' @param report Wheter to plot the report of once done.
 #'
-#' @return TODO.
+#' @return Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # create the model
+#' m <- data.frame(event = c("encoding", "delay", "response"),
+#' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
+#'
+#' # convolve
+#' r <- convolve_events(m)
+#'
+#' # evaluate
+#' df <- swm
+#' res <- run_model(df, r, m)
 #'
 run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
   # init local variables for CRAN check
@@ -91,36 +99,49 @@ run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
 
 
 #' @title autohrf
-#' @description TODO.
-#' @import gtools
-#' @import lubridate
+#' @description A function that automatically finds the parameters of model's that best match the underlying data.
+#' @import gtools lubridate stats
 #' @export
 #'
-#' @param d TODO.
-#' @param models TODO.
-#' @param population TODO.
-#' @param iter TODO.
-#' @param mutation_rate TODO.
-#' @param mutation_factor TODO.
-#' @param elitism TODO.
-#' @param tr TODO.
-#' @param f TODO.
-#' @param method TODO.
-#' @param hrf TODO.
-#' @param t TODO.
-#' @param delta TODO.
-#' @param tau TODO.
-#' @param alpha TODO.
-#' @param p TODO.
+#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.
+#' @param model_specs A list of model specifications to use for fitting. Each specification is represented as a data frame containing information about it (event, start_time, end_time, min_duration and max_duration).
+#' @param population The size of the population for use in the genetic algorithm.
+#' @param iter Number of iterations in the genetic algorithm.
+#' @param mutation_rate The mutation rate in the genetic algorithm.
+#' @param mutation_factor The mutation factor in the genetic algorithm.
+#' @param elitism Whether to use elitism (promote a number of the best solutions) in the genetic algorithm.
+#' @param tr MRI's repetition time.
+#' @param f Downsampling frequency.
+#' @param method Can be "middle" or "mean". Middle will return integer results, mean will return floats.
+#' @param hrf Method to use for HRF generation.
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param delta The delta parameter of Boynton's HRF.
+#' @param tau The tau parameter of Boynton's HRF.
+#' @param alpha The alpha parameter of Boynton's HRF.
+#' @param p The p parameter of SPM's HRF.
 #'
-#' @return TODO.
+#' @return A list containing model fits for each of the provided model specifications.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # prepare model specs
+#' model3 <- data.frame(event = c("encoding", "delay", "response"),
+#'                      start_time = c(0, 2.65, 12.5),
+#'                      end_time = c(3, 12.5, 16),
+#'                      min_duration = c(1, 5, 1))
+#'
+#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
+#'                      start_time = c(0, 2.5, 2.65, 12.5),
+#'                      end_time = c(2.5, 3, 12.5, 15.5),
+#'                      min_duration = c(1, 0.1, 5, 1))
+#'
+#' model_specs <- list(model3, model4)
+#'
+#' # run autohrf
+#' df <- swm
+#' autofit <- autohrf(df, model_specs, population=2, iter=2)
 #'
 autohrf <- function(d,
-                    models,
+                    model_specs,
                     population = 100,
                     iter = 100,
                     mutation_rate = 0.1,
@@ -138,18 +159,18 @@ autohrf <- function(d,
   pop <- population
   m_rate <- mutation_rate
   m_factor <- mutation_factor * pop
-  elitism <- round(pop * elitism)
+  elitism <- ceiling(pop * elitism)
 
   # results
   results <- list()
 
   # iterate over all models
-  n_models <- length(models)
+  n_models <- length(model_specs)
   total_iterations <- n_models * iter
   execution_time <- NULL
   for (m in 1:n_models) {
     # get model
-    current_model <- models[[m]]
+    current_model <- model_specs[[m]]
 
     # generate starting
     start_time <- list()
@@ -205,9 +226,8 @@ autohrf <- function(d,
       for (j in 1:pop) {
         # create model from data
         model <- data.frame(event = current_model$event,
-                            time = start_time[[j]],
-                            duration = end_time[[j]] - start_time[[j]],
-                            value = rep(1, n_events))
+                            start_time = start_time[[j]],
+                            duration = end_time[[j]] - start_time[[j]])
 
         r <- convolve_events(model=model,
                              tr=tr,
@@ -338,9 +358,8 @@ autohrf <- function(d,
     for (j in 1:pop) {
       # create model from data
       model <- data.frame(event = current_model$event,
-                          time = start_time[[j]],
-                          duration = end_time[[j]] - start_time[[j]],
-                          value = rep(1, n_events))
+                          start_time = start_time[[j]],
+                          duration = end_time[[j]] - start_time[[j]])
 
       new_models[[j]] <- model
     }
@@ -366,17 +385,32 @@ autohrf <- function(d,
 
 
 #' @title plot_fitness
-#' @description TODO.
+#' @description Plots how fitness changed through iterations of autohrf. Use this to invesitage whether your solution converged.
 #' @import ggplot2
 #' @export
 #'
-#' @param autofit TODO.
-#'
-#' @return TODO.
+#' @param autofit Output of the autohrf function.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # prepare model specs
+#' model3 <- data.frame(event = c("encoding", "delay", "response"),
+#'                      start_time = c(0, 2.65, 12.5),
+#'                      end_time = c(3, 12.5, 16),
+#'                      min_duration = c(1, 5, 1))
+#'
+#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
+#'                      start_time = c(0, 2.5, 2.65, 12.5),
+#'                      end_time = c(2.5, 3, 12.5, 15.5),
+#'                      min_duration = c(1, 0.1, 5, 1))
+#'
+#' model_specs <- list(model3, model4)
+#'
+#' # run autohrf
+#' df <- swm
+#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#'
+#' # plot fitness
+#' plot_fitness(autofit)
 #'
 plot_fitness <- function(autofit) {
   # init local variables for CRAN check
@@ -406,18 +440,33 @@ plot_fitness <- function(autofit) {
 
 
 #' @title plot_best_models
-#' @description TODO.
+#' @description Plots the best fitted model for each of the specs used in autohrf.
 #' @import ggplot2
 #' @import cowplot
 #' @export
 #'
-#' @param autofit TODO.
-#'
-#' @return TODO.
+#' @param autofit Output of the autohrf function.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # prepare model specs
+#' model3 <- data.frame(event = c("encoding", "delay", "response"),
+#'                      start_time = c(0, 2.65, 12.5),
+#'                      end_time = c(3, 12.5, 16),
+#'                      min_duration = c(1, 5, 1))
+#'
+#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
+#'                      start_time = c(0, 2.5, 2.65, 12.5),
+#'                      end_time = c(2.5, 3, 12.5, 15.5),
+#'                      min_duration = c(1, 0.1, 5, 1))
+#'
+#' model_specs <- list(model3, model4)
+#'
+#' # run autohrf
+#' df <- swm
+#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#'
+#' # plot best models
+#' plot_best_models(autofit)
 #'
 plot_best_models <- function(autofit) {
   # plot list storage
@@ -436,18 +485,32 @@ plot_best_models <- function(autofit) {
 
 
 #' @title print_best_models
-#' @description TODO.
-#' @import ggplot2
-#' @import cowplot
+#' @description Prints the best fitted model for each of the specs used in autohrf.
+#' @import utils
 #' @export
 #'
-#' @param autofit TODO.
-#'
-#' @return TODO.
+#' @param autofit Output of the autohrf function.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # prepare model specs
+#' model3 <- data.frame(event = c("encoding", "delay", "response"),
+#'                      start_time = c(0, 2.65, 12.5),
+#'                      end_time = c(3, 12.5, 16),
+#'                      min_duration = c(1, 5, 1))
+#'
+#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
+#'                      start_time = c(0, 2.5, 2.65, 12.5),
+#'                      end_time = c(2.5, 3, 12.5, 15.5),
+#'                      min_duration = c(1, 0.1, 5, 1))
+#'
+#' model_specs <- list(model3, model4)
+#'
+#' # run autohrf
+#' df <- swm
+#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#'
+#' # print best models
+#' print_best_models(autofit)
 #'
 print_best_models <- function(autofit) {
   # iterate over models

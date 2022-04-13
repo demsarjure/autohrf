@@ -3,25 +3,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 #' @title convolve_events
-#' @description TODO.
+#' @description Convolves events of a model with a generated HRF signal.
 #' @export
 #'
-#' @param model TODO.
+#' @param model A data frame containing information about the model to use (event, start_time, duration).
 #' @param tr MRI's repetition time.
-#' @param method TODO.
-#' @param f TODO.
-#' @param hrf TODO.
-#' @param t TODO.
-#' @param delta TODO.
-#' @param tau TODO.
-#' @param alpha TODO.
-#' @param p TODO.
+#' @param method Can be "middle" or "mean". Middle will return integer results, mean will return floats.
+#' @param f Downsampling frequency.
+#' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param delta The delta parameter of Boynton's HRF.
+#' @param tau The tau parameter of Boynton's HRF.
+#' @param alpha The alpha parameter of Boynton's HRF.
+#' @param p The p parameter of SPM's HRF.
 #'
-#' @return TODO.
+#' @return A list containing convolved events, signal and time series.
 #'
 #' @examples
-#' # TODO
-#' x <- "TODO"
+#' # create the model
+#' m <- data.frame(event = c("encoding", "delay", "response"),
+#' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
+#'
+#' # convolve
+#' res <- convolve_events(m)
 #'
 convolve_events <- function(model,
                             tr=2.5,
@@ -32,7 +36,7 @@ convolve_events <- function(model,
                             delta=2.25, tau=1.25, alpha=2,
                             p=c(6, 16, 1, 1, 6, 0, 32)) {
 
-  len <- max(model$time)+max(model$duration)+30
+  len <- max(model$start_time)+max(model$duration)+30
   len <- ceiling(len/tr)*tr
   e_tr <- tr/f
   len_ts <- ceiling(len/e_tr)
@@ -42,11 +46,11 @@ convolve_events <- function(model,
   m <- matrix(0, len_ts, n_events)
 
   for (i in 1:n_events) {
-    start <- round(model$time[i]/e_tr) + 1
-    end <- round((model$time[i] + model$duration[i])/e_tr)
+    start <- round(model$start_time[i]/e_tr) + 1
+    end <- round((model$start_time[i] + model$duration[i])/e_tr)
     for (j in start:end) {
-      ts[j] <- ts[j] + model$value[i]
-      m[j,i] <- model$value[i]
+      ts[j] <- ts[j] + 1
+      m[j,i] <- 1
     }
   }
 
@@ -69,24 +73,11 @@ convolve_events <- function(model,
 }
 
 
-#' @title plot_events
-#' @description TODO.
-#' @import ggplot2
-#' @export
-#'
-#' @param autofit TODO.
-#'
-#' @return TODO.
-#'
-#' @examples
-#' # TODO
-#' x <- "TODO"
-#'
+# A helper function for plotting events of a fitted model.
 plot_events <- function(autofit) {
   # init local variables for CRAN check
   duration <- NULL
   event <- NULL
-  value <- NULL
   x <- NULL
   y <- NULL
 
@@ -106,10 +97,9 @@ plot_events <- function(autofit) {
   ggplot() +
     geom_line(data=d[d$ts=="ts",], aes(x=x,y=y), color="black", size=1, alpha=0.5) +
     geom_line(data=d[d$ts != "ts",], aes(x=x, y=y, color=ts, group=ts)) +
-    geom_rect(data=model, aes(xmin=time, xmax=time+duration, ymax=0, ymin=-0.1*value, color=ts, fill=ts)) +
+    geom_rect(data=model, aes(xmin=time, xmax=time+duration, ymax=0, ymin=-0.1, color=ts, fill=ts)) +
     scale_color_brewer(type="qual", palette="Set1", name="Event") +
     scale_fill_brewer(type="qual", palette="Set1", name="Event") +
     ylab("") +
     xlab("Time")
 }
-

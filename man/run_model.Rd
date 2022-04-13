@@ -7,24 +7,32 @@
 run_model(d, r, model, normalize = TRUE, report = TRUE)
 }
 \arguments{
-\item{d}{TODO.}
+\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.}
 
-\item{r}{TODO.}
+\item{r}{The output from the convolve_events function.}
 
-\item{model}{TODO.}
+\item{model}{A data frame containing information about the model to use and its events (event, start_time and duration).}
 
-\item{normalize}{TODO.}
+\item{normalize}{Whether to normalize the signal.}
 
-\item{report}{TODO.}
+\item{report}{Wheter to plot the report of once done.}
 }
 \value{
-TODO.
+Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
 }
 \description{
-TODO.
+A function for evaluating the model against the data.
 }
 \examples{
-# TODO
-x <- "TODO"
+# create the model
+m <- data.frame(event = c("encoding", "delay", "response"),
+start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
+
+# convolve
+r <- convolve_events(m)
+
+# evaluate
+df <- swm
+res <- run_model(df, r, m)
 
 }

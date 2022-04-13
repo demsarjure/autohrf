@@ -6,7 +6,7 @@
 \usage{
 autohrf(
   d,
-  models,
+  model_specs,
   population = 100,
   iter = 100,
   mutation_rate = 0.1,
@@ -24,46 +24,60 @@ autohrf(
 )
 }
 \arguments{
-\item{d}{TODO.}
+\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.}
 
-\item{models}{TODO.}
+\item{model_specs}{A list of model specifications to use for fitting. Each specification is represented as a data frame containing information about it (event, start_time, end_time, min_duration and max_duration).}
 
-\item{population}{TODO.}
+\item{population}{The size of the population for use in the genetic algorithm.}
 
-\item{iter}{TODO.}
+\item{iter}{Number of iterations in the genetic algorithm.}
 
-\item{mutation_rate}{TODO.}
+\item{mutation_rate}{The mutation rate in the genetic algorithm.}
 
-\item{mutation_factor}{TODO.}
+\item{mutation_factor}{The mutation factor in the genetic algorithm.}
 
-\item{elitism}{TODO.}
+\item{elitism}{Whether to use elitism (promote a number of the best solutions) in the genetic algorithm.}
 
-\item{tr}{TODO.}
+\item{tr}{MRI's repetition time.}
 
-\item{f}{TODO.}
+\item{f}{Downsampling frequency.}
 
-\item{method}{TODO.}
+\item{method}{Can be "middle" or "mean". Middle will return integer results, mean will return floats.}
 
-\item{hrf}{TODO.}
+\item{hrf}{Method to use for HRF generation.}
 
-\item{t}{TODO.}
+\item{t}{The t parameter for Boynton or SPM HRF generation.}
 
-\item{delta}{TODO.}
+\item{delta}{The delta parameter of Boynton's HRF.}
 
-\item{tau}{TODO.}
+\item{tau}{The tau parameter of Boynton's HRF.}
 
-\item{alpha}{TODO.}
+\item{alpha}{The alpha parameter of Boynton's HRF.}
 
-\item{p}{TODO.}
+\item{p}{The p parameter of SPM's HRF.}
 }
 \value{
-TODO.
+A list containing model fits for each of the provided model specifications.
 }
 \description{
-TODO.
+A function that automatically finds the parameters of model's that best match the underlying data.
 }
 \examples{
-# TODO
-x <- "TODO"
+# prepare model specs
+model3 <- data.frame(event = c("encoding", "delay", "response"),
+                     start_time = c(0, 2.65, 12.5),
+                     end_time = c(3, 12.5, 16),
+                     min_duration = c(1, 5, 1))
+
+model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
+                     start_time = c(0, 2.5, 2.65, 12.5),
+                     end_time = c(2.5, 3, 12.5, 15.5),
+                     min_duration = c(1, 0.1, 5, 1))
+
+model_specs <- list(model3, model4)
+
+# run autohrf
+df <- swm
+autofit <- autohrf(df, model_specs, population=2, iter=2)
 
 }

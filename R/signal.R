@@ -2,23 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-#' @title downsample
-#' @description Downsample a time series by filtering its time stamps/indexes.
-#' @export
-#'
-#' @param x The indexes/time stamps to downsample.
-#' @param f Downsampling frequency.
-#' @param method Can be "middle" or "mean". Middle will return integer results, mean will return floats.
-#'
-#' @return A vector representing a downsampled input signal.
-#'
-#' @examples
-#' # time stamps
-#' x <- seq(1:1000)
-#'
-#' # downsample
-#' x_d <- downsample(x)
-#'
+# A helper function for downsampling a given signal.
 downsample <- function(x, f=100, method="middle") {
   # prepare the input data
   x <- as.matrix(x)

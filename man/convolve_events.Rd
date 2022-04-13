@@ -18,34 +18,38 @@ convolve_events(
 )
 }
 \arguments{
-\item{model}{TODO.}
+\item{model}{A data frame containing information about the model to use (event, start_time, duration).}
 
 \item{tr}{MRI's repetition time.}
 
-\item{method}{TODO.}
+\item{method}{Can be "middle" or "mean". Middle will return integer results, mean will return floats.}
 
-\item{f}{TODO.}
+\item{f}{Downsampling frequency.}
 
-\item{hrf}{TODO.}
+\item{hrf}{Method to use for HRF generation, can be "boynton" or "spm".}
 
-\item{t}{TODO.}
+\item{t}{The t parameter for Boynton or SPM HRF generation.}
 
-\item{delta}{TODO.}
+\item{delta}{The delta parameter of Boynton's HRF.}
 
-\item{tau}{TODO.}
+\item{tau}{The tau parameter of Boynton's HRF.}
 
-\item{alpha}{TODO.}
+\item{alpha}{The alpha parameter of Boynton's HRF.}
 
-\item{p}{TODO.}
+\item{p}{The p parameter of SPM's HRF.}
 }
 \value{
-TODO.
+A list containing convolved events, signal and time series.
 }
 \description{
-TODO.
+Convolves events of a model with a generated HRF signal.
 }
 \examples{
-# TODO
-x <- "TODO"
+# create the model
+m <- data.frame(event = c("encoding", "delay", "response"),
+start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
+
+# convolve
+res <- convolve_events(m)
 
 }
