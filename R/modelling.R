@@ -7,11 +7,11 @@
 #' @import ggplot2
 #' @export
 #'
-#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.
-#' @param r The output from the convolve_events function.
+#' @param d A data frame with the signal data: roi, t and x. ROI is the name of the region, t time stamps and x values of the signal.
+#' @param ce The output from the convolve_events function.
 #' @param model A data frame containing information about the model to use and its events (event, start_time and duration).
 #' @param normalize Whether to normalize the signal.
-#' @param report Wheter to plot the report of once done.
+#' @param report Whether to plot the report of once done.
 #'
 #' @return Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
 #'
@@ -21,13 +21,13 @@
 #' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 #'
 #' # convolve
-#' r <- convolve_events(m)
+#' ce <- convolve_events(m)
 #'
 #' # evaluate
 #' df <- swm
-#' res <- run_model(df, r, m)
+#' res <- run_model(df, ce, m)
 #'
-run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
+run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
   # init local variables for CRAN check
   event <- NULL
   y <- NULL
@@ -48,20 +48,20 @@ run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
   for (roi in rois) {
     # normalize if needed
     if (normalize) {
-      r$x[1:l,] <- r$x[1:l,] /
-        matrix(apply(r$x[1:l,], 2, FUN=function(x) max(abs(x))), nrow=l, ncol=n_events, byrow=TRUE)
+      ce$x[1:l,] <- ce$x[1:l,] /
+        matrix(apply(ce$x[1:l,], 2, FUN=function(x) max(abs(x))), nrow=l, ncol=n_events, byrow=TRUE)
     }
 
     # compute the linear model
-    d[d$roi == roi, events] <- r$x[1:l,]
+    d[d$roi == roi, events] <- ce$x[1:l,]
     m <- lm(formula(d[, c("x", events)]), d[d$roi == roi,] )
 
     # save component timeseries
-    d[d$roi == roi, events] <- r$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE)
+    d[d$roi == roi, events] <- ce$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE)
     d[d$roi == roi, "(Intercept)"] <- m$coefficients["(Intercept)"][[1]]
     d[d$roi == roi, "y"] <- apply(as.matrix(d[d$roi == roi, c("(Intercept)", events)]), 1, FUN=sum)
     d[d$roi == roi, "r"] <- m$residuals
-    d[d$roi == roi, events] <- r$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE) + m$coefficients["(Intercept)"][[1]]
+    d[d$roi == roi, events] <- ce$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE) + m$coefficients["(Intercept)"][[1]]
 
     r2 <- 1 - var(m$residuals)/var(d[d$roi == roi, "x"])
 
@@ -77,11 +77,11 @@ run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
 
   fit$event <- factor(fit$event, levels=c("x", events, "y"), ordered=TRUE)
 
-  r = list(mean=mean(coeffs$r2), median=median(coeffs$r2), min=min(coeffs$r2))
+  r2 = list(mean=mean(coeffs$r2), median=median(coeffs$r2), min=min(coeffs$r2))
 
   # print the report
   if (report) {
-    print(r)
+    print(r2)
 
     p <- ggplot() +
       geom_line(data=fit[fit$event == "x",],      aes(x=t, y=y), color="black", size=1, alpha=0.5) +
@@ -94,13 +94,40 @@ run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
     print(ggplot(fit, aes(t, y, color=event)) + geom_line() + facet_wrap(~ roi, scales="free_y"))
   }
 
-  return(list(fit=fit, d=d, c=coeffs, r=r))
+  return(list(fit=fit, d=d, c=coeffs, r2=r2))
+}
+
+
+#' @title plot_model
+#' @description Plots a manually constructed model.
+#' @import ggplot2
+#' @export
+#'
+#' @param model A data frame containing information about the model to use and its events (event, start_time and duration).
+#' @param ce The output of convolve_events by using the model and the data we are testing against.
+#' @param tr MRI's repetition time.
+#'
+#'
+#' @examples
+#' # prepare model specs
+#' model3 <- data.frame(event      = c("encoding", "delay", "response"),
+#'                      start_time = c(0,           2.65,    12.5     ),
+#'                      duration   = c(2.65,        9.85,    3        ))
+#'
+#'
+plot_model <- function(model, ce, tr=2.5) {
+  # prepare af
+  af <- list(models=list(model), fitness=0, best=ce, tr=tr)
+
+  # iterate over models
+  plot_events(af)
 }
 
 
 #' @title autohrf
 #' @description A function that automatically finds the parameters of model's that best match the underlying data.
-#' @import gtools lubridate stats
+#' @import gtools stats
+#' @importFrom lubridate day hour minute second seconds_to_period
 #' @export
 #'
 #' @param d A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.
@@ -124,15 +151,19 @@ run_model <- function(d, r, model, normalize=TRUE, report=TRUE) {
 #'
 #' @examples
 #' # prepare model specs
-#' model3 <- data.frame(event = c("encoding", "delay", "response"),
-#'                      start_time = c(0, 2.65, 12.5),
-#'                      end_time = c(3, 12.5, 16),
-#'                      min_duration = c(1, 5, 1))
+#' model3 <- data.frame(
+#'   event        = c("encoding", "delay", "response"),
+#'   start_time   = c(0,          2.65,     12.5     ),
+#'   end_time     = c(3,          12.5,     16       ),
+#'   min_duration = c(1,          5,        1        )
+#' )
 #'
-#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-#'                      start_time = c(0, 2.5, 2.65, 12.5),
-#'                      end_time = c(2.5, 3, 12.5, 15.5),
-#'                      min_duration = c(1, 0.1, 5, 1))
+#' model4 <- data.frame(
+#'   event        = c("fixation", "target", "delay", "response"),
+#'   start_time   = c(0,          2.5,      2.65,    12.5),
+#'   end_time     = c(2.5,        3,        12.5,    15.5),
+#'   min_duration = c(1,          0.1,      5,       1)
+#' )
 #'
 #' model_specs <- list(model3, model4)
 #'
@@ -229,7 +260,7 @@ autohrf <- function(d,
                             start_time = start_time[[j]],
                             duration = end_time[[j]] - start_time[[j]])
 
-        r <- convolve_events(model=model,
+        ce <- convolve_events(model=model,
                              tr=tr,
                              f=f,
                              method=method,
@@ -238,8 +269,8 @@ autohrf <- function(d,
                              delta=delta, tau=tau, alpha=alpha,
                              p=p)
 
-        rm <- run_model(d=d, r=r, model=model, report=FALSE)
-        r2 <- rm$r$mean
+        rm <- run_model(d=d, ce=ce, model=model, report=FALSE)
+        r2 <- rm$r2$mean
         fitness <- append(fitness, r2)
       }
 
@@ -393,15 +424,19 @@ autohrf <- function(d,
 #'
 #' @examples
 #' # prepare model specs
-#' model3 <- data.frame(event = c("encoding", "delay", "response"),
-#'                      start_time = c(0, 2.65, 12.5),
-#'                      end_time = c(3, 12.5, 16),
-#'                      min_duration = c(1, 5, 1))
+#' model3 <- data.frame(
+#'   event        = c("encoding", "delay", "response"),
+#'   start_time   = c(0,          2.65,     12.5     ),
+#'   end_time     = c(3,          12.5,     16       ),
+#'   min_duration = c(1,          5,        1        )
+#' )
 #'
-#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-#'                      start_time = c(0, 2.5, 2.65, 12.5),
-#'                      end_time = c(2.5, 3, 12.5, 15.5),
-#'                      min_duration = c(1, 0.1, 5, 1))
+#' model4 <- data.frame(
+#'   event        = c("fixation", "target", "delay", "response"),
+#'   start_time   = c(0,          2.5,      2.65,    12.5),
+#'   end_time     = c(2.5,        3,        12.5,    15.5),
+#'   min_duration = c(1,          0.1,      5,       1)
+#' )
 #'
 #' model_specs <- list(model3, model4)
 #'
@@ -449,15 +484,19 @@ plot_fitness <- function(autofit) {
 #'
 #' @examples
 #' # prepare model specs
-#' model3 <- data.frame(event = c("encoding", "delay", "response"),
-#'                      start_time = c(0, 2.65, 12.5),
-#'                      end_time = c(3, 12.5, 16),
-#'                      min_duration = c(1, 5, 1))
+#' model3 <- data.frame(
+#'   event        = c("encoding", "delay", "response"),
+#'   start_time   = c(0,          2.65,     12.5     ),
+#'   end_time     = c(3,          12.5,     16       ),
+#'   min_duration = c(1,          5,        1        )
+#' )
 #'
-#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-#'                      start_time = c(0, 2.5, 2.65, 12.5),
-#'                      end_time = c(2.5, 3, 12.5, 15.5),
-#'                      min_duration = c(1, 0.1, 5, 1))
+#' model4 <- data.frame(
+#'   event        = c("fixation", "target", "delay", "response"),
+#'   start_time   = c(0,          2.5,      2.65,    12.5),
+#'   end_time     = c(2.5,        3,        12.5,    15.5),
+#'   min_duration = c(1,          0.1,      5,       1)
+#' )
 #'
 #' model_specs <- list(model3, model4)
 #'
@@ -493,15 +532,19 @@ plot_best_models <- function(autofit) {
 #'
 #' @examples
 #' # prepare model specs
-#' model3 <- data.frame(event = c("encoding", "delay", "response"),
-#'                      start_time = c(0, 2.65, 12.5),
-#'                      end_time = c(3, 12.5, 16),
-#'                      min_duration = c(1, 5, 1))
+#' model3 <- data.frame(
+#'   event        = c("encoding", "delay", "response"),
+#'   start_time   = c(0,          2.65,     12.5     ),
+#'   end_time     = c(3,          12.5,     16       ),
+#'   min_duration = c(1,          5,        1        )
+#' )
 #'
-#' model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-#'                      start_time = c(0, 2.5, 2.65, 12.5),
-#'                      end_time = c(2.5, 3, 12.5, 15.5),
-#'                      min_duration = c(1, 0.1, 5, 1))
+#' model4 <- data.frame(
+#'   event        = c("fixation", "target", "delay", "response"),
+#'   start_time   = c(0,          2.5,      2.65,    12.5),
+#'   end_time     = c(2.5,        3,        12.5,    15.5),
+#'   min_duration = c(1,          0.1,      5,       1)
+#' )
 #'
 #' model_specs <- list(model3, model4)
 #'

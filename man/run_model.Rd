@@ -4,18 +4,18 @@
 \alias{run_model}
 \title{run_model}
 \usage{
-run_model(d, r, model, normalize = TRUE, report = TRUE)
+run_model(d, ce, model, normalize = TRUE, report = FALSE)
 }
 \arguments{
-\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.}
+\item{d}{A data frame with the signal data: roi, t and x. ROI is the name of the region, t time stamps and x values of the signal.}
 
-\item{r}{The output from the convolve_events function.}
+\item{ce}{The output from the convolve_events function.}
 
 \item{model}{A data frame containing information about the model to use and its events (event, start_time and duration).}
 
 \item{normalize}{Whether to normalize the signal.}
 
-\item{report}{Wheter to plot the report of once done.}
+\item{report}{Whether to plot the report of once done.}
 }
 \value{
 Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
@@ -29,10 +29,10 @@ m <- data.frame(event = c("encoding", "delay", "response"),
 start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
 # convolve
-r <- convolve_events(m)
+ce <- convolve_events(m)
 
 # evaluate
 df <- swm
-res <- run_model(df, r, m)
+res <- run_model(df, ce, m)
 
 }

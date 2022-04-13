@@ -64,15 +64,19 @@ A function that automatically finds the parameters of model's that best match th
 }
 \examples{
 # prepare model specs
-model3 <- data.frame(event = c("encoding", "delay", "response"),
-                     start_time = c(0, 2.65, 12.5),
-                     end_time = c(3, 12.5, 16),
-                     min_duration = c(1, 5, 1))
+model3 <- data.frame(
+  event        = c("encoding", "delay", "response"),
+  start_time   = c(0,          2.65,     12.5     ),
+  end_time     = c(3,          12.5,     16       ),
+  min_duration = c(1,          5,        1        )
+)
 
-model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-                     start_time = c(0, 2.5, 2.65, 12.5),
-                     end_time = c(2.5, 3, 12.5, 15.5),
-                     min_duration = c(1, 0.1, 5, 1))
+model4 <- data.frame(
+  event        = c("fixation", "target", "delay", "response"),
+  start_time   = c(0,          2.5,      2.65,    12.5),
+  end_time     = c(2.5,        3,        12.5,    15.5),
+  min_duration = c(1,          0.1,      5,       1)
+)
 
 model_specs <- list(model3, model4)
 

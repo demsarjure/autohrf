@@ -1,3 +1,5 @@
+# TODO REPLACE WITH A PROPER VIGNETTE
+
 # Load d
 df <- swm
 
