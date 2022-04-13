@@ -76,8 +76,9 @@ convolve_events <- function(model,
 # A helper function for plotting events of a fitted model.
 plot_events <- function(autofit) {
   # init local variables for CRAN check
-  duration <- NULL
   event <- NULL
+  start_time <- NULL
+  duration <- NULL
   x <- NULL
   y <- NULL
 
@@ -97,7 +98,7 @@ plot_events <- function(autofit) {
   ggplot() +
     geom_line(data=d[d$ts=="ts",], aes(x=x,y=y), color="black", size=1, alpha=0.5) +
     geom_line(data=d[d$ts != "ts",], aes(x=x, y=y, color=ts, group=ts)) +
-    geom_rect(data=model, aes(xmin=time, xmax=time+duration, ymax=0, ymin=-0.1, color=ts, fill=ts)) +
+    geom_rect(data=model, aes(xmin=start_time, xmax=start_time+duration, ymax=0, ymin=-0.1, color=ts, fill=ts)) +
     scale_color_brewer(type="qual", palette="Set1", name="Event") +
     scale_fill_brewer(type="qual", palette="Set1", name="Event") +
     ylab("") +

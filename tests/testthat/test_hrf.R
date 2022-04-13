@@ -1,15 +1,18 @@
 library(autohrf)
 
+# set tolerance
+tol <- 0.01
+
 # create_boynton_hrf
 test_that("create_boynton_hrf", {
   hrf <- create_boynton_hrf()
-  expect_equal(mean(hrf), 0.1328353)
+  expect_equal(mean(hrf), 0.132, tolerance=tol)
 })
 
 # create_spm_hrf
 test_that("create_spm_hrf", {
   hrf <- create_spm_hrf()
-  expect_equal(mean(hrf), 0.1467475)
+  expect_equal(mean(hrf), 0.146, tolerance=tol)
 })
 
 # convolve_hrf
@@ -17,6 +20,6 @@ test_that("convolve_hrf", {
   hrf <- create_boynton_hrf()
   x <- seq(1:10)
   c_hrf <- convolve_hrf(x, hrf)
-  expect_equal(mean(c_hrf), 0.4297225)
+  expect_equal(mean(c_hrf), 0.429, tolerance=tol)
 })
 
