@@ -7,9 +7,11 @@
 plot_model(model, ce, tr = 2.5)
 }
 \arguments{
-\item{model}{A data frame containing information about the model to use and its events (event, start_time and duration).}
+\item{model}{A data frame containing information about the model to use and
+its events (event, start_time and duration).}
 
-\item{ce}{The output of convolve_events by using the model and the data we are testing against.}
+\item{ce}{The output of convolve_events by using the model and the data we
+are testing against.}
 
 \item{tr}{MRI's repetition time.}
 }

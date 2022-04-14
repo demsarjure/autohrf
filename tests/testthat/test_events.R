@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Jure Demšar, Nina Purg, Grega Repovš
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 library(autohrf)
 
 # set tolerance
@@ -10,9 +14,9 @@ set.seed(27)
 # 3 events: encoding, delay, response
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
-  start_time   = c(0,          2.65,     12.5     ),
-  end_time     = c(3,          12.5,     16       ),
-  min_duration = c(1,          5,        1        )
+  start_time   = c(0,          2.65,     12.5),
+  end_time     = c(3,          12.5,     16),
+  min_duration = c(1,          5,        1)
 )
 
 # 4 events: fixation, target, delay, response
@@ -27,7 +31,7 @@ model_specs <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, population=2, iter=2)
+autofit <- autohrf(df, model_specs, population = 2, iter = 2)
 
 # convolve_events
 test_that("convolve_events", {
@@ -39,9 +43,9 @@ test_that("convolve_events", {
   r <- convolve_events(m)
 
   # test
-  expect_equal(mean(r$m), 0.111, tolerance=tol)
-  expect_equal(mean(r$x), 0.135, tolerance=tol)
-  expect_equal(mean(r$ts), 0.333, tolerance=tol)
+  expect_equal(mean(r$m), 0.111, tolerance = tol)
+  expect_equal(mean(r$x), 0.135, tolerance = tol)
+  expect_equal(mean(r$ts), 0.333, tolerance = tol)
 })
 
 # plot_events

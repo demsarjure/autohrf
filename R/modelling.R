@@ -7,13 +7,17 @@
 #' @import ggplot2
 #' @export
 #'
-#' @param d A data frame with the signal data: roi, t and x. ROI is the name of the region, t time stamps and x values of the signal.
+#' @param d A data frame with the signal data: roi, t and x.
+#' ROI is the name of the region, t time stamps and x values of the signal.
 #' @param ce The output from the convolve_events function.
-#' @param model A data frame containing information about the model to use and its events (event, start_time and duration).
+#' @param model A data frame containing information about the model to use
+#' and its events (event, start_time and duration).
 #' @param normalize Whether to normalize the signal.
 #' @param report Whether to plot the report of once done.
 #'
-#' @return Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
+#' @return Returns a list that contains the HRF function, fits of events for
+#' each ROI, estimates of fit quality for each ROI and a summary of model's
+#' fits.
 #'
 #' @examples
 #' # create the model
@@ -42,30 +46,41 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
   # expand the dataframe
   d[, c("(Intercept)", events, "y", "r")] <- 0
   d[, "(Intercept)"] <- 1
-  l = dim(d[d$roi==rois[1],])[1]
+  l <- dim(d[d$roi == rois[1], ])[1]
 
   # run through rois
   for (roi in rois) {
     # normalize if needed
     if (normalize) {
-      ce$x[1:l,] <- ce$x[1:l,] /
-        matrix(apply(ce$x[1:l,], 2, FUN=function(x) max(abs(x))), nrow=l, ncol=n_events, byrow=TRUE)
+      ce$x[1:l, ] <- ce$x[1:l, ] /
+        matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
+               nrow = l,
+               ncol = n_events,
+               byrow = TRUE)
     }
 
     # compute the linear model
-    d[d$roi == roi, events] <- ce$x[1:l,]
-    m <- lm(formula(d[, c("x", events)]), d[d$roi == roi,] )
+    d[d$roi == roi, events] <- ce$x[1:l, ]
+    m <- lm(formula(d[, c("x", events)]), d[d$roi == roi, ])
 
     # save component timeseries
-    d[d$roi == roi, events] <- ce$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE)
+    d[d$roi == roi, events] <- ce$x[1:l, ] *
+                               matrix(m$coefficients[events],
+                                      l, length(model$event), byrow = TRUE)
     d[d$roi == roi, "(Intercept)"] <- m$coefficients["(Intercept)"][[1]]
-    d[d$roi == roi, "y"] <- apply(as.matrix(d[d$roi == roi, c("(Intercept)", events)]), 1, FUN=sum)
+    d[d$roi == roi, "y"] <-
+      apply(as.matrix(d[d$roi == roi, c("(Intercept)", events)]), 1, FUN = sum)
     d[d$roi == roi, "r"] <- m$residuals
-    d[d$roi == roi, events] <- ce$x[1:l,] * matrix(m$coefficients[events], l, length(model$event), byrow=TRUE) + m$coefficients["(Intercept)"][[1]]
+    d[d$roi == roi, events] <-
+      ce$x[1:l, ] *
+      matrix(m$coefficients[events], l, length(model$event), byrow = TRUE) +
+      m$coefficients["(Intercept)"][[1]]
 
-    r2 <- 1 - var(m$residuals)/var(d[d$roi == roi, "x"])
+    r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "x"])
 
-    coeffs <- rbind(coeffs, data.frame(c(r=roi, as.list(m$coefficients[events]), r2=r2)))
+    coeffs <-
+      rbind(coeffs,
+            data.frame(c(r = roi, as.list(m$coefficients[events]), r2 = r2)))
   }
 
   for (v in c("x", events, "y")) {
@@ -75,26 +90,37 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
     fit <- rbind(fit, t)
   }
 
-  fit$event <- factor(fit$event, levels=c("x", events, "y"), ordered=TRUE)
+  fit$event <- factor(fit$event, levels = c("x", events, "y"), ordered = TRUE)
 
-  r2 = list(mean=mean(coeffs$r2), median=median(coeffs$r2), min=min(coeffs$r2))
+  r2 <-
+    list(mean = mean(coeffs$r2),
+         median = median(coeffs$r2),
+         min = min(coeffs$r2))
 
   # print the report
   if (report) {
     print(r2)
 
     p <- ggplot() +
-      geom_line(data=fit[fit$event == "x",],      aes(x=t, y=y), color="black", size=1, alpha=0.5) +
-      geom_line(data=fit[fit$event %in% events,], aes(x=t, y=y, color=event, group=event)) +
-      geom_line(data=fit[fit$event == "y",],      aes(x=t, y=y), color="red", size=1, alpha=0.3) +
-      ylab("") + xlab("time") + scale_fill_discrete(name="event") + scale_color_discrete(name="event") +
-      facet_wrap(~ roi, scales="free_y")
+      geom_line(data = fit[fit$event == "x", ],
+                aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
+      geom_line(data = fit[fit$event %in% events, ],
+                aes(x = t, y = y, color = event, group = event)) +
+      geom_line(data = fit[fit$event == "y", ],
+                aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
+      ylab("") +
+      xlab("time") +
+      scale_fill_discrete(name = "event") +
+      scale_color_discrete(name = "event") +
+      facet_wrap(~ roi, scales = "free_y")
     print(p)
 
-    print(ggplot(fit, aes(t, y, color=event)) + geom_line() + facet_wrap(~ roi, scales="free_y"))
+    print(ggplot(fit, aes(t, y, color = event)) +
+      geom_line() +
+      facet_wrap(~ roi, scales = "free_y"))
   }
 
-  return(list(fit=fit, d=d, c=coeffs, r2=r2))
+  return(list(fit = fit, d = d, c = coeffs, r2 = r2))
 }
 
 
@@ -103,8 +129,10 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
 #' @import ggplot2
 #' @export
 #'
-#' @param model A data frame containing information about the model to use and its events (event, start_time and duration).
-#' @param ce The output of convolve_events by using the model and the data we are testing against.
+#' @param model A data frame containing information about the model to use and
+#' its events (event, start_time and duration).
+#' @param ce The output of convolve_events by using the model and the data we
+#' are testing against.
 #' @param tr MRI's repetition time.
 #'
 #'
@@ -117,7 +145,7 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
 #'
 plot_model <- function(model, ce, tr=2.5) {
   # prepare af
-  af <- list(models=list(model), fitness=0, best=ce, tr=tr)
+  af <- list(models = list(model), fitness = 0, best = ce, tr = tr)
 
   # iterate over models
   plot_events(af)
@@ -125,21 +153,27 @@ plot_model <- function(model, ce, tr=2.5) {
 
 
 #' @title autohrf
-#' @description A function that automatically finds the parameters of model's that best match the underlying data.
+#' @description A function that automatically finds the parameters of model's
+#' that best match the underlying data.
 #' @import gtools stats
 #' @importFrom lubridate day hour minute second seconds_to_period
 #' @export
 #'
-#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.
-#' @param model_specs A list of model specifications to use for fitting. Each specification is represented as a data frame containing information about it (event, start_time, end_time, min_duration and max_duration).
-#' @param population The size of the population for use in the genetic algorithm.
+#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of
+#' the region, t timestamps and x values of the signal.
+#' @param model_specs A list of model specifications to use for fitting. Each
+#' specification is represented as a data frame containing information about it
+#' (event, start_time, end_time, min_duration and max_duration).
+#' @param population The size of the population in the genetic algorithm.
 #' @param iter Number of iterations in the genetic algorithm.
 #' @param mutation_rate The mutation rate in the genetic algorithm.
 #' @param mutation_factor The mutation factor in the genetic algorithm.
-#' @param elitism Whether to use elitism (promote a number of the best solutions) in the genetic algorithm.
+#' @param elitism Whether to use elitism (promote a number of the best
+#' solutions) in the genetic algorithm.
 #' @param tr MRI's repetition time.
 #' @param f Downsampling frequency.
-#' @param method Can be "middle" or "mean". Middle will return integer results, mean will return floats.
+#' @param method Can be "middle" or "mean". Middle will return integer results,
+#' mean will return floats.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
 #' @param delta The delta parameter of Boynton's HRF.
@@ -147,15 +181,16 @@ plot_model <- function(model, ce, tr=2.5) {
 #' @param alpha The alpha parameter of Boynton's HRF.
 #' @param p The p parameter of SPM's HRF.
 #'
-#' @return A list containing model fits for each of the provided model specifications.
+#' @return A list containing model fits for each of the provided model
+#' specifications.
 #'
 #' @examples
 #' # prepare model specs
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
-#'   start_time   = c(0,          2.65,     12.5     ),
-#'   end_time     = c(3,          12.5,     16       ),
-#'   min_duration = c(1,          5,        1        )
+#'   start_time   = c(0,          2.65,     12.5),
+#'   end_time     = c(3,          12.5,     16),
+#'   min_duration = c(1,          5,        1)
 #' )
 #'
 #' model4 <- data.frame(
@@ -198,12 +233,12 @@ autohrf <- function(d,
   # iterate over all models
   n_models <- length(model_specs)
   total_iterations <- n_models * iter
-  execution_time <- NULL
+  execution_time <- Sys.time()
   for (m in 1:n_models) {
     # get model
     current_model <- model_specs[[m]]
 
-    # generate starting
+    # generate starting generation
     start_time <- list()
     end_time <- list()
     n_events <- nrow(current_model)
@@ -235,22 +270,19 @@ autohrf <- function(d,
     max_fitness <- vector()
     for (i in 1:iter) {
       # calculate eta
-      current_iteration <- i + ((m-1) * iter)
-      if (!is.null(execution_time)) {
-        seconds <- difftime(Sys.time(), execution_time, units="secs")
-        eta <- round(seconds * (total_iterations - current_iteration + 1), 1)
-        eta <- seconds_to_period(eta)
-        eta <- sprintf('%02d-%02d:%02d:%02d',
-                       day(eta), hour(eta), minute(eta), round(second(eta)))
-      } else {
-        eta <- "x"
-      }
+      current_iteration <- i + ((m - 1) * iter)
+      seconds <- difftime(Sys.time(), execution_time, units = "secs")
+      eta <- round(seconds * (total_iterations - current_iteration + 1), 1)
+      eta <- seconds_to_period(eta)
+      eta <- sprintf("%02d-%02d:%02d:%02d",
+                      day(eta), hour(eta), minute(eta), round(second(eta)))
 
       # time of execution
       execution_time <- Sys.time()
 
       # print
-      cat("Progress:\t", current_iteration, "/", total_iterations, "\teta:", eta, "\n")
+      cat("Progress:\t", current_iteration, "/",
+          total_iterations, "\teta:", eta, "\n")
 
       # evaluate each model
       fitness <- vector()
@@ -260,127 +292,40 @@ autohrf <- function(d,
                             start_time = start_time[[j]],
                             duration = end_time[[j]] - start_time[[j]])
 
-        ce <- convolve_events(model=model,
-                             tr=tr,
-                             f=f,
-                             method=method,
-                             hrf=hrf,
-                             t=t,
-                             delta=delta, tau=tau, alpha=alpha,
-                             p=p)
+        ce <- convolve_events(model = model,
+                             tr = tr,
+                             f = f,
+                             method = method,
+                             hrf = hrf,
+                             t = t,
+                             delta = delta, tau = tau, alpha = alpha,
+                             p = p)
 
-        rm <- run_model(d=d, ce=ce, model=model, report=FALSE)
+        rm <- run_model(d = d, ce = ce, model = model, report = FALSE)
         r2 <- rm$r2$mean
         fitness <- append(fitness, r2)
       }
 
       # sort
-      start_time <- start_time[mixedorder(fitness, decreasing=TRUE)]
-      end_time <- end_time[mixedorder(fitness, decreasing=TRUE)]
-      fitness <- sort(fitness, decreasing=TRUE)
+      start_time <- start_time[mixedorder(fitness, decreasing = TRUE)]
+      end_time <- end_time[mixedorder(fitness, decreasing = TRUE)]
+      fitness <- sort(fitness, decreasing = TRUE)
       max_fitness <- append(max_fitness, max(fitness))
-      sum_fitness <- sum(fitness)
 
       # create next gen (skip in last generation)
       if (i != iter) {
-        new_start <- list()
-        new_end  <- list()
+        times <- create_new_generation(elitism,
+                                       pop,
+                                       start_time,
+                                       end_time,
+                                       fitness,
+                                       n_events,
+                                       m_factor,
+                                       m_rate,
+                                       current_model)
 
-        # copy the best ones (elitism)
-        for (e in 1:elitism) {
-          new_start[[e]] <- start_time[[e]]
-          new_end[[e]] <- end_time[[e]]
-        }
-
-        # create new ones with genetic algorithms
-        for (j in (elitism+1):pop) {
-          # get parents
-          p1 <- 1
-          p2 <- 1
-
-          for (k in 1:2) {
-            # random number for parent lottery
-            rand <- runif(1, 0, sum_fitness)
-            sum <- 0
-            p_temp <- 1
-            # iterate until sum larger than random
-            while (TRUE) {
-              sum <- sum + fitness[p_temp]
-              if (sum >= rand) {
-                break
-              }
-              p_temp <- p_temp + 1
-            }
-            # set parents
-            if (k == 1) {
-              p1 <- p_temp
-            } else {
-              p2 <- p_temp
-            }
-          }
-
-          # crossover
-          start1 <- start_time[[p1]]
-          end1 <- end_time[[p1]]
-          start2 <- start_time[[p2]]
-          end2 <- end_time[[p2]]
-
-          # take half of p1
-          half1 <- round(n_events/2)
-          half2 <- n_events - half1
-
-          # take first half from p1 and second from p2
-          start <- append(start1[1:half1], start2[half1+1:half2])
-          end <- append(end1[1:half1], end2[half1+1:half2])
-
-          # mutations modify values
-          for (k in 1:n_events) {
-            # time
-            rand <- runif(1)
-            if (rand < m_rate) {
-              # add some random value (depends on m_factor)
-              start[k] <- start[k] + runif(1, -m_factor, m_factor)
-              end[k] <- end[k] + runif(1, -m_factor, m_factor)
-
-              if (end[k] < start[k]) {
-                temp <- start[k]
-                start[k] <- end[k]
-                end[k] <- temp
-              }
-            }
-          }
-
-          # clamp events to boundaries
-          for (k in 1:n_events) {
-            # get event
-            event <- current_model[k, ]
-
-            end_limit <- event$end_time
-            # get boundaries
-            if (k == 1) {
-              start_limit <- event$start_time
-            } else {
-              start_limit <- max(event$start_time, end[k-1])
-            }
-
-            # clamp to boundaries
-            start[k] <- max(start_limit, min(end_limit-event$min_duration, start[k]))
-            end[k] <- max(start[k]+event$min_duration, min(end_limit, end[k]))
-
-            # prevent too short events
-            if ((end[k] - start[k]) < event$min_duration) {
-              end[k] = start[k] + event$min_duration
-            }
-          }
-
-          # store
-          new_start[[j]] <- start
-          new_end[[j]] <- end
-        }
-
-        # replace old generation with new and repeat
-        start_time <- new_start
-        end_time <- new_end
+        start_time <- times[[1]]
+        end_time <- times[[2]]
       }
     }
 
@@ -396,27 +341,184 @@ autohrf <- function(d,
     }
 
     #evaluate the best model
-    r <- convolve_events(model=new_models[[1]],
-                         tr=tr,
-                         f=f,
-                         method=method,
-                         hrf=hrf,
-                         t=t,
-                         delta=delta, tau=tau, alpha=alpha,
-                         p=p)
+    r <- convolve_events(model = new_models[[1]],
+                         tr = tr,
+                         f = f,
+                         method = method,
+                         hrf = hrf,
+                         t = t,
+                         delta = delta, tau = tau, alpha = alpha,
+                         p = p)
 
-    results[[m]] <- list(models=new_models,
-                         fitness=max_fitness,
-                         best=r,
-                         tr=tr)
+    results[[m]] <- list(models = new_models,
+                         fitness = max_fitness,
+                         best = r,
+                         tr = tr)
   }
 
   return(results)
 }
 
+# a helper function for creating a new generation of possible solutions
+create_new_generation <- function(elitism,
+                                  pop,
+                                  start_time,
+                                  end_time,
+                                  fitness,
+                                  n_events,
+                                  m_factor,
+                                  m_rate,
+                                  current_model) {
+
+  new_start <- list()
+  new_end  <- list()
+
+  # copy the best ones (elitism)
+  for (e in 1:elitism) {
+    new_start[[e]] <- start_time[[e]]
+    new_end[[e]] <- end_time[[e]]
+  }
+
+  # create new ones with genetic algorithms
+  for (j in (elitism + 1):pop) {
+    # get parents
+    parents <- get_parents(fitness)
+    p1 <- parents[[1]]
+    p2 <- parents[[2]]
+
+    # create child
+    child <- create_child(start_time,
+                          end_time,
+                          n_events,
+                          m_rate,
+                          m_factor,
+                          current_model,
+                          p1,
+                          p2)
+
+    # store
+    new_start[[j]] <- child[[1]]
+    new_end[[j]] <- child[[2]]
+  }
+
+  # replace old generation with new
+  times <- list()
+  times[[1]] <- new_start
+  times[[2]] <- new_end
+
+  return(times)
+}
+
+# a helper function for getting parents
+get_parents <- function(fitness) {
+  sum_fitness <- sum(fitness)
+
+  # get parents
+  p1 <- 1
+  p2 <- 1
+
+  for (k in 1:2) {
+    # random number for parent lottery
+    rand <- runif(1, 0, sum_fitness)
+    sum <- 0
+    p_temp <- 1
+    # iterate until sum larger than random
+    while (TRUE) {
+      sum <- sum + fitness[p_temp]
+      if (sum >= rand) {
+        break
+      }
+      p_temp <- p_temp + 1
+    }
+    # set parents
+    if (k == 1) {
+      p1 <- p_temp
+    } else {
+      p2 <- p_temp
+    }
+  }
+
+  # store parents
+  parents <- list()
+  parents[[1]] <- p1
+  parents[[2]] <- p2
+
+  return(parents)
+}
+
+# a helper function for creating a child from parents
+create_child <- function(start_time,
+                         end_time,
+                         n_events,
+                         m_rate,
+                         m_factor,
+                         current_model,
+                         p1,
+                         p2) {
+  # crossover
+  start1 <- start_time[[p1]]
+  end1 <- end_time[[p1]]
+  start2 <- start_time[[p2]]
+  end2 <- end_time[[p2]]
+
+  # take half of p1
+  half1 <- round(n_events / 2)
+  half2 <- n_events - half1
+
+  # take first half from p1 and second from p2
+  start <- append(start1[1:half1], start2[half1 + 1:half2])
+  end <- append(end1[1:half1], end2[half1 + 1:half2])
+
+  # mutations modify values
+  for (k in 1:n_events) {
+    # time
+    rand <- runif(1)
+    if (rand < m_rate) {
+      # add some random value (depends on m_factor)
+      start[k] <- start[k] + runif(1, -m_factor, m_factor)
+      end[k] <- end[k] + runif(1, -m_factor, m_factor)
+
+      if (end[k] < start[k]) {
+        temp <- start[k]
+        start[k] <- end[k]
+        end[k] <- temp
+      }
+    }
+  }
+
+  # clamp events to boundaries
+  for (k in 1:n_events) {
+    # get event
+    event <- current_model[k, ]
+
+    end_limit <- event$end_time
+    # get boundaries
+    if (k == 1) {
+      start_limit <- event$start_time
+    } else {
+      start_limit <- max(event$start_time, end[k - 1])
+    }
+
+    # clamp to boundaries
+    start[k] <- max(start_limit,
+                    min(end_limit - event$min_duration, start[k]))
+    end[k] <- max(start[k] + event$min_duration, min(end_limit, end[k]))
+
+    # prevent too short events
+    if ((end[k] - start[k]) < event$min_duration) {
+      end[k] <- start[k] + event$min_duration
+    }
+  }
+
+  child <- list()
+  child[[1]] <- start
+  child[[2]] <- end
+  return(child)
+}
 
 #' @title plot_fitness
-#' @description Plots how fitness changed through iterations of autohrf. Use this to invesitage whether your solution converged.
+#' @description Plots how fitness changed through iterations of autohrf.
+#' Use this to invesitage whether your solution converged.
 #' @import ggplot2
 #' @export
 #'
@@ -426,9 +528,9 @@ autohrf <- function(d,
 #' # prepare model specs
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
-#'   start_time   = c(0,          2.65,     12.5     ),
-#'   end_time     = c(3,          12.5,     16       ),
-#'   min_duration = c(1,          5,        1        )
+#'   start_time   = c(0,          2.65,     12.5),
+#'   end_time     = c(3,          12.5,     16),
+#'   min_duration = c(1,          5,        1)
 #' )
 #'
 #' model4 <- data.frame(
@@ -449,33 +551,33 @@ autohrf <- function(d,
 #'
 plot_fitness <- function(autofit) {
   # init local variables for CRAN check
-  Index <- NULL
-  Fitness <- NULL
-  Model <- NULL
+  index <- NULL
+  fitness <- NULL
+  model <- NULL
 
   # empty variables for
   fitness <- NULL
 
   # iterate over all fits and prepare the data frame
-  for (i in 1:length(autofit)) {
-    fit <- data.frame(Fitness=autofit[[i]]$fitness,
-                      Index=seq(length(autofit[[i]]$fitness)),
-                      Model=as.factor(i))
+  for (i in seq_len(length(autofit))) {
+    fit <- data.frame(fitness = autofit[[i]]$fitness,
+                      index = seq(length(autofit[[i]]$fitness)),
+                      model = as.factor(i))
 
     fitness <- rbind(fitness, fit)
   }
 
   # plot the results
-  ggplot(data=fitness, aes(x=Index, y=Fitness, color=Model)) +
-    geom_line(size=1) +
+  ggplot(data = fitness, aes(x = index, y = fitness, color = model)) +
+    geom_line(size = 1) +
     ylab("Fitness") +
     xlab("Iteration") +
-    scale_color_brewer(type="qual", palette="Set1")
+    labs(color = "Model") +
+    scale_color_brewer(type = "qual", palette = "Set1")
 }
 
-
 #' @title plot_best_models
-#' @description Plots the best fitted model for each of the specs used in autohrf.
+#' @description Plots the best fitted model for each of the specs in autohrf.
 #' @import ggplot2
 #' @import cowplot
 #' @export
@@ -486,9 +588,9 @@ plot_fitness <- function(autofit) {
 #' # prepare model specs
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
-#'   start_time   = c(0,          2.65,     12.5     ),
-#'   end_time     = c(3,          12.5,     16       ),
-#'   min_duration = c(1,          5,        1        )
+#'   start_time   = c(0,          2.65,     12.5),
+#'   end_time     = c(3,          12.5,     16),
+#'   min_duration = c(1,          5,        1)
 #' )
 #'
 #' model4 <- data.frame(
@@ -519,12 +621,13 @@ plot_best_models <- function(autofit) {
   }
 
   # plot grid
-  cowplot::plot_grid(plotlist=graphs, nrow=i-1, ncol=1, scale=0.95)
+  cowplot::plot_grid(plotlist = graphs, nrow = i - 1, ncol = 1, scale = 0.95)
 }
 
 
 #' @title print_best_models
-#' @description Prints the best fitted model for each of the specs used in autohrf.
+#' @description Prints the best fitted model for each of the specs used in
+#' autohrf.
 #' @import utils
 #' @export
 #'
@@ -534,9 +637,9 @@ plot_best_models <- function(autofit) {
 #' # prepare model specs
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
-#'   start_time   = c(0,          2.65,     12.5     ),
-#'   end_time     = c(3,          12.5,     16       ),
-#'   min_duration = c(1,          5,        1        )
+#'   start_time   = c(0,          2.65,     12.5),
+#'   end_time     = c(3,          12.5,     16),
+#'   min_duration = c(1,          5,        1)
 #' )
 #'
 #' model4 <- data.frame(

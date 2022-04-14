@@ -12,18 +12,18 @@ downsample <- function(x, f=100, method="middle") {
 
   # iterate over the series
   for (i in 1:n) {
-    start = (i-1)*f + 1
-    end   = i*f
+    start <- (i - 1) * f + 1
+    end <- i * f
     if (end > l) end <- l
 
     # middle or mean
     if (method == "middle") {
-      middle <- round(start + f/2)
+      middle <- round(start + f / 2)
       if (middle > l) middle <- l
-      m[i,] = x[middle, ]
+      m[i, ] <- x[middle, ]
     }
     else if (method == "mean") {
-      m[i,] = apply(as.matrix(x[start:end,]), 2, FUN=mean)
+      m[i, ] <- apply(as.matrix(x[start:end, ]), 2, FUN = mean)
     }
   }
 

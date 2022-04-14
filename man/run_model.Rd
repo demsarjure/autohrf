@@ -7,18 +7,22 @@
 run_model(d, ce, model, normalize = TRUE, report = FALSE)
 }
 \arguments{
-\item{d}{A data frame with the signal data: roi, t and x. ROI is the name of the region, t time stamps and x values of the signal.}
+\item{d}{A data frame with the signal data: roi, t and x.
+ROI is the name of the region, t time stamps and x values of the signal.}
 
 \item{ce}{The output from the convolve_events function.}
 
-\item{model}{A data frame containing information about the model to use and its events (event, start_time and duration).}
+\item{model}{A data frame containing information about the model to use
+and its events (event, start_time and duration).}
 
 \item{normalize}{Whether to normalize the signal.}
 
 \item{report}{Whether to plot the report of once done.}
 }
 \value{
-Returns a list that contains the HRF function, fits of events for each ROI, estimates of fit quality for each ROI and a summary of model's fits.
+Returns a list that contains the HRF function, fits of events for
+each ROI, estimates of fit quality for each ROI and a summary of model's
+fits.
 }
 \description{
 A function for evaluating the model against the data.

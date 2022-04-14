@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 Jure Demšar, Nina Purg, Grega Repovš
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 library(autohrf)
 
 # set tolerance
@@ -11,8 +15,8 @@ df <- swm
 
 # run_model --------------------------------------------------------------------
 model <- data.frame(event      = c("encoding", "delay", "response"),
-                    start_time = c(0,           2.65,    12.5     ),
-                    duration   = c(2.65,        9.85,    3        ))
+                    start_time = c(0,           2.65,    12.5),
+                    duration   = c(2.65,        9.85,    3))
 
 # convolve
 ce <- convolve_events(model)
@@ -23,9 +27,9 @@ test_that("run_model", {
   res <- run_model(df, ce, model)
 
   # test
-  expect_equal(mean(res$r2$mean), 0.897, tolerance=tol)
-  expect_equal(mean(res$r2$median), 0.92, tolerance=tol)
-  expect_equal(mean(res$r2$min), 0.765, tolerance=tol)
+  expect_equal(mean(res$r2$mean), 0.897, tolerance = tol)
+  expect_equal(mean(res$r2$median), 0.92, tolerance = tol)
+  expect_equal(mean(res$r2$min), 0.765, tolerance = tol)
 })
 
 # run_model
@@ -39,9 +43,9 @@ test_that("plot_model", {
 # 3 events: encoding, delay, response
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
-  start_time   = c(0,          2.65,     12.5     ),
-  end_time     = c(3,          12.5,     16       ),
-  min_duration = c(1,          5,        1        )
+  start_time   = c(0,          2.65,     12.5),
+  end_time     = c(3,          12.5,     16),
+  min_duration = c(1,          5,        1)
 )
 
 # 4 events: fixation, target, delay, response
@@ -55,12 +59,12 @@ model4 <- data.frame(
 model_specs <- list(model3, model4)
 
 # run autohrf
-autofit <- autohrf(df, model_specs, population=2, iter=2)
+autofit <- autohrf(df, model_specs, population = 2, iter = 2)
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.857, tolerance=tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.90, tolerance=tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.857, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.90, tolerance = tol)
 })
 
 # plot_best_models

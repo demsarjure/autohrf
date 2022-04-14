@@ -18,11 +18,13 @@ convolve_events(
 )
 }
 \arguments{
-\item{model}{A data frame containing information about the model to use (event, start_time, duration).}
+\item{model}{A data frame containing information about the model to use
+(event, start_time, duration).}
 
 \item{tr}{MRI's repetition time.}
 
-\item{method}{Can be "middle" or "mean". Middle will return integer results, mean will return floats.}
+\item{method}{Can be "middle" or "mean".
+Middle will return integer results, mean will return floats.}
 
 \item{f}{Downsampling frequency.}
 

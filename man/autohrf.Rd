@@ -24,11 +24,14 @@ autohrf(
 )
 }
 \arguments{
-\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of the region, t timestamps and x values of the signal.}
+\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of
+the region, t timestamps and x values of the signal.}
 
-\item{model_specs}{A list of model specifications to use for fitting. Each specification is represented as a data frame containing information about it (event, start_time, end_time, min_duration and max_duration).}
+\item{model_specs}{A list of model specifications to use for fitting. Each
+specification is represented as a data frame containing information about it
+(event, start_time, end_time, min_duration and max_duration).}
 
-\item{population}{The size of the population for use in the genetic algorithm.}
+\item{population}{The size of the population in the genetic algorithm.}
 
 \item{iter}{Number of iterations in the genetic algorithm.}
 
@@ -36,13 +39,15 @@ autohrf(
 
 \item{mutation_factor}{The mutation factor in the genetic algorithm.}
 
-\item{elitism}{Whether to use elitism (promote a number of the best solutions) in the genetic algorithm.}
+\item{elitism}{Whether to use elitism (promote a number of the best
+solutions) in the genetic algorithm.}
 
 \item{tr}{MRI's repetition time.}
 
 \item{f}{Downsampling frequency.}
 
-\item{method}{Can be "middle" or "mean". Middle will return integer results, mean will return floats.}
+\item{method}{Can be "middle" or "mean". Middle will return integer results,
+mean will return floats.}
 
 \item{hrf}{Method to use for HRF generation.}
 
@@ -57,18 +62,20 @@ autohrf(
 \item{p}{The p parameter of SPM's HRF.}
 }
 \value{
-A list containing model fits for each of the provided model specifications.
+A list containing model fits for each of the provided model
+specifications.
 }
 \description{
-A function that automatically finds the parameters of model's that best match the underlying data.
+A function that automatically finds the parameters of model's
+that best match the underlying data.
 }
 \examples{
 # prepare model specs
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
-  start_time   = c(0,          2.65,     12.5     ),
-  end_time     = c(3,          12.5,     16       ),
-  min_duration = c(1,          5,        1        )
+  start_time   = c(0,          2.65,     12.5),
+  end_time     = c(3,          12.5,     16),
+  min_duration = c(1,          5,        1)
 )
 
 model4 <- data.frame(

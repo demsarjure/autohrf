@@ -10,15 +10,15 @@ plot_best_models(autofit)
 \item{autofit}{Output of the autohrf function.}
 }
 \description{
-Plots the best fitted model for each of the specs used in autohrf.
+Plots the best fitted model for each of the specs in autohrf.
 }
 \examples{
 # prepare model specs
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
-  start_time   = c(0,          2.65,     12.5     ),
-  end_time     = c(3,          12.5,     16       ),
-  min_duration = c(1,          5,        1        )
+  start_time   = c(0,          2.65,     12.5),
+  end_time     = c(3,          12.5,     16),
+  min_duration = c(1,          5,        1)
 )
 
 model4 <- data.frame(
