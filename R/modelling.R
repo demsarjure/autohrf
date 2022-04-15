@@ -282,7 +282,7 @@ autohrf <- function(d,
 
     # set min duration to default if not set
     if (!"min_duration" %in% colnames(current_model)) {
-      current_model$min_duration <- rep(0, nrow(current_model))
+      current_model$min_duration <- rep(0.1, nrow(current_model))
     }
 
     # set max duration to default if not set
