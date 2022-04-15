@@ -7,6 +7,8 @@
 autohrf(
   d,
   model_specs,
+  allow_overlap = FALSE,
+  roi_weights = NULL,
   population = 100,
   iter = 100,
   mutation_rate = 0.1,
@@ -30,6 +32,13 @@ the region, t timestamps and x values of the signal.}
 \item{model_specs}{A list of model specifications to use for fitting. Each
 specification is represented as a data frame containing information about it
 (event, start_time, end_time, min_duration and max_duration).}
+
+\item{allow_overlap}{Whether to allow overlap between events.}
+
+\item{roi_weights}{A data frame with ROI weights: roi, weight. ROI is the
+name of the region, weight a number that defines the importance of that roi,
+the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+will be twice as important.}
 
 \item{population}{The size of the population in the genetic algorithm.}
 
@@ -74,15 +83,13 @@ that best match the underlying data.
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
   start_time   = c(0,          2.65,     12.5),
-  end_time     = c(3,          12.5,     16),
-  min_duration = c(1,          5,        1)
+  end_time     = c(3,          12.5,     16)
 )
 
 model4 <- data.frame(
   event        = c("fixation", "target", "delay", "response"),
   start_time   = c(0,          2.5,      2.65,    12.5),
-  end_time     = c(2.5,        3,        12.5,    15.5),
-  min_duration = c(1,          0.1,      5,       1)
+  end_time     = c(2.5,        3,        12.5,    15.5)
 )
 
 model_specs <- list(model3, model4)

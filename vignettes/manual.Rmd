@@ -23,7 +23,6 @@ The **autohrf** package is not only useful for preparing model specifications an
 
 Let us start this example by loading required libraries and the data from the spatial working memory experiment (SWM).
 
-
 ```{r}
 # libs
 library(autohrf)
@@ -66,7 +65,7 @@ rm3 <- run_model(df, c3, model3)
 rm3$r2$mean
 ```
 
-```
+```{r}
 # 4 events
 c4 <- convolve_events(model4)
 #plot_model(model4, c4)
@@ -76,7 +75,7 @@ rm4 <- run_model(df, c4, model4)
 rm4$r2$mean
 ```
 
-```
+```{r}
 # 5 events
 c5 <- convolve_events(model5)
 #plot_model(model5, c5)

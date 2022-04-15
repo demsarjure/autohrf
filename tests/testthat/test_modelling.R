@@ -21,15 +21,21 @@ model <- data.frame(event      = c("encoding", "delay", "response"),
 # convolve
 ce <- convolve_events(model)
 
+# set some weights
+roi_weights <-
+  data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
+             weight = c(2, 2, 4))
+
 # run_model
 test_that("run_model", {
   # run_model
-  res <- run_model(df, ce, model)
+  res <- run_model(df, ce, model, roi_weights = roi_weights)
 
   # test
-  expect_equal(mean(res$r2$mean), 0.897, tolerance = tol)
-  expect_equal(mean(res$r2$median), 0.92, tolerance = tol)
-  expect_equal(mean(res$r2$min), 0.765, tolerance = tol)
+  expect_equal(res$r2$mean, 0.897, tolerance = tol)
+  expect_equal(res$r2$median, 0.92, tolerance = tol)
+  expect_equal(res$r2$min, 0.765, tolerance = tol)
+  expect_equal(res$r2$weighted, 0.9, tolerance = tol)
 })
 
 # run_model
@@ -44,27 +50,29 @@ test_that("plot_model", {
 model3 <- data.frame(
   event        = c("encoding", "delay", "response"),
   start_time   = c(0,          2.65,     12.5),
-  end_time     = c(3,          12.5,     16),
-  min_duration = c(1,          5,        1)
+  end_time     = c(3,          12.5,     16)
 )
 
 # 4 events: fixation, target, delay, response
 model4 <- data.frame(
   event        = c("fixation", "target", "delay", "response"),
   start_time   = c(0,          2.5,      2.65,    12.5),
-  end_time     = c(2.5,        3,        12.5,    15.5),
-  min_duration = c(1,          0.1,      5,       1)
+  end_time     = c(2.5,        3,        12.5,    15.5)
 )
 
 model_specs <- list(model3, model4)
 
 # run autohrf
-autofit <- autohrf(df, model_specs, population = 2, iter = 2)
+autofit <- autohrf(df,
+                  model_specs,
+                  roi_weights = roi_weights,
+                  population = 2,
+                  iter = 2)
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.857, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.90, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.802, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.849, tolerance = tol)
 })
 
 # plot_best_models

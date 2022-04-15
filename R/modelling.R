@@ -12,6 +12,10 @@
 #' @param ce The output from the convolve_events function.
 #' @param model A data frame containing information about the model to use
 #' and its events (event, start_time and duration).
+#' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
+#' name of the region, weight a number that defines the importance of that roi,
+#' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+#' will be twice as important.
 #' @param normalize Whether to normalize the signal.
 #' @param report Whether to plot the report of once done.
 #'
@@ -31,7 +35,13 @@
 #' df <- swm
 #' res <- run_model(df, ce, m)
 #'
-run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
+run_model <- function(d,
+                      ce,
+                      model,
+                      roi_weights=NULL,
+                      normalize=TRUE,
+                      report=FALSE) {
+
   # init local variables for CRAN check
   event <- NULL
   y <- NULL
@@ -42,6 +52,19 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
   rois <- unique(d$roi)
   events <- as.character(model$event)
   n_events <- length(events)
+
+  # create weights if not defined
+  default_roi_weights <- data.frame(roi = unique(d$roi), weight = 1)
+  if (!is.null(roi_weights)) {
+    roi_weights <- merge(default_roi_weights, roi_weights,
+                         by = "roi", all.x = TRUE)
+    roi_weights <-
+      data.frame(roi = roi_weights$roi,
+                 weight = ifelse(is.na(roi_weights$weight.y),
+                                 roi_weights$weight.x, roi_weights$weight.y))
+  } else {
+    roi_weights <- default_roi_weights
+  }
 
   # expand the dataframe
   d[, c("(Intercept)", events, "y", "r")] <- 0
@@ -76,11 +99,18 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
       matrix(m$coefficients[events], l, length(model$event), byrow = TRUE) +
       m$coefficients["(Intercept)"][[1]]
 
+    # calculate r2
     r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "x"])
+
+    # calculate r2w
+    r2w <- r2 * roi_weights[roi_weights$roi == roi, "weight"]
 
     coeffs <-
       rbind(coeffs,
-            data.frame(c(r = roi, as.list(m$coefficients[events]), r2 = r2)))
+            data.frame(c(r = roi,
+                       as.list(m$coefficients[events]),
+                       r2 = r2,
+                       r2w = r2w)))
   }
 
   for (v in c("x", events, "y")) {
@@ -92,10 +122,14 @@ run_model <- function(d, ce, model, normalize=TRUE, report=FALSE) {
 
   fit$event <- factor(fit$event, levels = c("x", events, "y"), ordered = TRUE)
 
+  # weighted r2
+  r2w <- sum(coeffs$r2w) / sum(roi_weights$weight)
+
   r2 <-
     list(mean = mean(coeffs$r2),
          median = median(coeffs$r2),
-         min = min(coeffs$r2))
+         min = min(coeffs$r2),
+         weighted = r2w)
 
   # print the report
   if (report) {
@@ -165,6 +199,11 @@ plot_model <- function(model, ce, tr=2.5) {
 #' specification is represented as a data frame containing information about it
 #' (event, start_time, end_time, min_duration and max_duration).
 #' @param population The size of the population in the genetic algorithm.
+#' @param allow_overlap Whether to allow overlap between events.
+#' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
+#' name of the region, weight a number that defines the importance of that roi,
+#' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+#' will be twice as important.
 #' @param iter Number of iterations in the genetic algorithm.
 #' @param mutation_rate The mutation rate in the genetic algorithm.
 #' @param mutation_factor The mutation factor in the genetic algorithm.
@@ -189,15 +228,13 @@ plot_model <- function(model, ce, tr=2.5) {
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
 #'   start_time   = c(0,          2.65,     12.5),
-#'   end_time     = c(3,          12.5,     16),
-#'   min_duration = c(1,          5,        1)
+#'   end_time     = c(3,          12.5,     16)
 #' )
 #'
 #' model4 <- data.frame(
 #'   event        = c("fixation", "target", "delay", "response"),
 #'   start_time   = c(0,          2.5,      2.65,    12.5),
-#'   end_time     = c(2.5,        3,        12.5,    15.5),
-#'   min_duration = c(1,          0.1,      5,       1)
+#'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
 #' model_specs <- list(model3, model4)
@@ -208,6 +245,8 @@ plot_model <- function(model, ce, tr=2.5) {
 #'
 autohrf <- function(d,
                     model_specs,
+                    allow_overlap = FALSE,
+                    roi_weights = NULL,
                     population = 100,
                     iter = 100,
                     mutation_rate = 0.1,
@@ -217,9 +256,11 @@ autohrf <- function(d,
                     f=100,
                     method = "middle",
                     hrf = "boynton",
-                    t=32,
-                    delta=2.25, tau=1.25, alpha=2,
-                    p=c(6, 16, 1, 1, 6, 0, 32)) {
+                    t = 32,
+                    delta = 2.25,
+                    tau = 1.25,
+                    alpha = 2,
+                    p = c(6, 16, 1, 1, 6, 0, 32)) {
 
   # parameters
   pop <- population
@@ -237,34 +278,26 @@ autohrf <- function(d,
   for (m in 1:n_models) {
     # get model
     current_model <- model_specs[[m]]
-
-    # generate starting generation
-    start_time <- list()
-    end_time <- list()
     n_events <- nrow(current_model)
-    for (i in 1:pop) {
-      # variables for start and end times
-      starts <- NULL
-      ends <- NULL
-      for (j in 1:n_events) {
-        # get event
-        event <- current_model[j, ]
 
-        # create random and add to variable
-        start <- runif(1, event$start_time, event$end_time - event$min_duration)
-        end <- runif(1, start + event$min_duration, event$end_time)
-        starts <- append(starts, start)
-        ends <- append(ends, end)
-      }
-
-      # sort in case of overlaps
-      starts <- sort(starts)
-      ends <- sort(ends)
-
-      # store
-      start_time[[i]] <- starts
-      end_time[[i]] <- ends
+    # set min duration to default if not set
+    if (!"min_duration" %in% colnames(current_model)) {
+      current_model$min_duration <- rep(0, nrow(current_model))
     }
+
+    # set max duration to default if not set
+    if (!"max_duration" %in% colnames(current_model)) {
+      current_model$max_duration <-
+        current_model$end_time - current_model$start_time
+    }
+
+    # create first generation
+    times <- create_first_generation(current_model,
+                                     n_events,
+                                     pop,
+                                     allow_overlap)
+    start_time <- times[[1]]
+    end_time <- times[[2]]
 
     # iterate over generations
     max_fitness <- vector()
@@ -293,16 +326,16 @@ autohrf <- function(d,
                             duration = end_time[[j]] - start_time[[j]])
 
         ce <- convolve_events(model = model,
-                             tr = tr,
-                             f = f,
-                             method = method,
-                             hrf = hrf,
-                             t = t,
-                             delta = delta, tau = tau, alpha = alpha,
-                             p = p)
+                              tr = tr,
+                              f = f,
+                              method = method,
+                              hrf = hrf,
+                              t = t,
+                              delta = delta, tau = tau, alpha = alpha,
+                              p = p)
 
         rm <- run_model(d = d, ce = ce, model = model, report = FALSE)
-        r2 <- rm$r2$mean
+        r2 <- rm$r2$weighted
         fitness <- append(fitness, r2)
       }
 
@@ -322,7 +355,8 @@ autohrf <- function(d,
                                        n_events,
                                        m_factor,
                                        m_rate,
-                                       current_model)
+                                       current_model,
+                                       allow_overlap)
 
         start_time <- times[[1]]
         end_time <- times[[2]]
@@ -359,6 +393,51 @@ autohrf <- function(d,
   return(results)
 }
 
+
+# a helper function for creating the first generation
+create_first_generation <- function(current_model,
+                                    n_events,
+                                    pop,
+                                    allow_overlap) {
+
+  start_time <- list()
+  end_time <- list()
+  for (i in 1:pop) {
+    # variables for start and end times
+    starts <- NULL
+    ends <- NULL
+
+    for (j in 1:n_events) {
+      # get event
+      event <- current_model[j, ]
+
+      # create random and add to variable
+      duration <- runif(1, event$min_duration, event$max_duration)
+      start <- runif(1, event$start_time, event$end_time - duration)
+      end <- start + duration
+
+      starts <- append(starts, start)
+      ends <- append(ends, end)
+    }
+
+    # sort in case of overlaps
+    if (!allow_overlap) {
+      starts <- sort(starts)
+      ends <- sort(ends)
+    }
+
+    # store
+    start_time[[i]] <- starts
+    end_time[[i]] <- ends
+  }
+
+  times <- list()
+  times[[1]] <- start_time
+  times[[2]] <- end_time
+  return(times)
+}
+
+
 # a helper function for creating a new generation of possible solutions
 create_new_generation <- function(elitism,
                                   pop,
@@ -368,7 +447,8 @@ create_new_generation <- function(elitism,
                                   n_events,
                                   m_factor,
                                   m_rate,
-                                  current_model) {
+                                  current_model,
+                                  allow_overlap) {
 
   new_start <- list()
   new_end  <- list()
@@ -394,7 +474,8 @@ create_new_generation <- function(elitism,
                           m_factor,
                           current_model,
                           p1,
-                          p2)
+                          p2,
+                          allow_overlap)
 
     # store
     new_start[[j]] <- child[[1]]
@@ -454,7 +535,8 @@ create_child <- function(start_time,
                          m_factor,
                          current_model,
                          p1,
-                         p2) {
+                         p2,
+                         allow_overlap) {
   # crossover
   start1 <- start_time[[p1]]
   end1 <- end_time[[p1]]
@@ -486,28 +568,25 @@ create_child <- function(start_time,
     }
   }
 
-  # clamp events to boundaries
+  # clamp model events to boundaries
   for (k in 1:n_events) {
-    # get event
+    # get model
     event <- current_model[k, ]
 
-    end_limit <- event$end_time
-    # get boundaries
-    if (k == 1) {
-      start_limit <- event$start_time
-    } else {
-      start_limit <- max(event$start_time, end[k - 1])
-    }
+    # extract info
+    st <- event$start_time
+    et <- event$end_time
+    min_d <- event$min_duration
+    max_d <- event$max_duration
 
-    # clamp to boundaries
-    start[k] <- max(start_limit,
-                    min(end_limit - event$min_duration, start[k]))
-    end[k] <- max(start[k] + event$min_duration, min(end_limit, end[k]))
+    # start time needs to be larger than start_time
+    # and lower than end_time - min_duration
+    start[k] <- max(st, min(et - min_d, start[k]))
 
-    # prevent too short events
-    if ((end[k] - start[k]) < event$min_duration) {
-      end[k] <- start[k] + event$min_duration
-    }
+    # end time needs to be lower than end_time
+    # and larger than start_time + min_duration
+    # and lower than start_time + max_duration
+    end[k] <- min(et, max(st + min_d, min(st + max_d, end[k])))
   }
 
   child <- list()
@@ -529,15 +608,13 @@ create_child <- function(start_time,
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
 #'   start_time   = c(0,          2.65,     12.5),
-#'   end_time     = c(3,          12.5,     16),
-#'   min_duration = c(1,          5,        1)
+#'   end_time     = c(3,          12.5,     16)
 #' )
 #'
 #' model4 <- data.frame(
 #'   event        = c("fixation", "target", "delay", "response"),
 #'   start_time   = c(0,          2.5,      2.65,    12.5),
-#'   end_time     = c(2.5,        3,        12.5,    15.5),
-#'   min_duration = c(1,          0.1,      5,       1)
+#'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
 #' model_specs <- list(model3, model4)
@@ -589,15 +666,13 @@ plot_fitness <- function(autofit) {
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
 #'   start_time   = c(0,          2.65,     12.5),
-#'   end_time     = c(3,          12.5,     16),
-#'   min_duration = c(1,          5,        1)
+#'   end_time     = c(3,          12.5,     16)
 #' )
 #'
 #' model4 <- data.frame(
 #'   event        = c("fixation", "target", "delay", "response"),
 #'   start_time   = c(0,          2.5,      2.65,    12.5),
-#'   end_time     = c(2.5,        3,        12.5,    15.5),
-#'   min_duration = c(1,          0.1,      5,       1)
+#'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
 #' model_specs <- list(model3, model4)
@@ -638,15 +713,13 @@ plot_best_models <- function(autofit) {
 #' model3 <- data.frame(
 #'   event        = c("encoding", "delay", "response"),
 #'   start_time   = c(0,          2.65,     12.5),
-#'   end_time     = c(3,          12.5,     16),
-#'   min_duration = c(1,          5,        1)
+#'   end_time     = c(3,          12.5,     16)
 #' )
 #'
 #' model4 <- data.frame(
 #'   event        = c("fixation", "target", "delay", "response"),
 #'   start_time   = c(0,          2.5,      2.65,    12.5),
-#'   end_time     = c(2.5,        3,        12.5,    15.5),
-#'   min_duration = c(1,          0.1,      5,       1)
+#'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
 #' model_specs <- list(model3, model4)

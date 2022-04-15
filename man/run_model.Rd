@@ -4,7 +4,7 @@
 \alias{run_model}
 \title{run_model}
 \usage{
-run_model(d, ce, model, normalize = TRUE, report = FALSE)
+run_model(d, ce, model, roi_weights = NULL, normalize = TRUE, report = FALSE)
 }
 \arguments{
 \item{d}{A data frame with the signal data: roi, t and x.
@@ -14,6 +14,11 @@ ROI is the name of the region, t time stamps and x values of the signal.}
 
 \item{model}{A data frame containing information about the model to use
 and its events (event, start_time and duration).}
+
+\item{roi_weights}{A data frame with ROI weights: roi, weight. ROI is the
+name of the region, weight a number that defines the importance of that roi,
+the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+will be twice as important.}
 
 \item{normalize}{Whether to normalize the signal.}
 
