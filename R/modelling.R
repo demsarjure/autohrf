@@ -2,14 +2,13 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-#' @title run_model
+#' @title evaluate_model
 #' @description A function for evaluating the model against the data.
 #' @import ggplot2
 #' @export
 #'
 #' @param d A data frame with the signal data: roi, t and x.
 #' ROI is the name of the region, t time stamps and x values of the signal.
-#' @param ce The output from the convolve_events function.
 #' @param model A data frame containing information about the model to use
 #' and its events (event, start_time and duration).
 #' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
@@ -17,11 +16,19 @@
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
 #' @param normalize Whether to normalize the signal.
-#' @param report Whether to plot the report of once done.
+#' @param tr MRI's repetition time.
+#' @param method Can be "middle" or "mean".
+#' Middle will return integer results, mean will return floats.
+#' @param f Downsampling frequency.
+#' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param delta The delta parameter of Boynton's HRF.
+#' @param tau The tau parameter of Boynton's HRF.
+#' @param alpha The alpha parameter of Boynton's HRF.
+#' @param p The p parameter of SPM's HRF.
 #'
-#' @return Returns a list that contains the HRF function, fits of events for
-#' each ROI, estimates of fit quality for each ROI and a summary of model's
-#' fits.
+#' @return Returns a list that contains the model, fits of events for
+#' each ROI, convolved events and the TR.
 #'
 #' @examples
 #' # create the model
@@ -33,8 +40,55 @@
 #'
 #' # evaluate
 #' df <- swm
-#' res <- run_model(df, ce, m)
+#' res <- evaluate_model(df, ce, m)
 #'
+evaluate_model <- function(d,
+                           model,
+                           roi_weights=NULL,
+                           normalize=TRUE,
+                           tr=2.5,
+                           method="middle",
+                           f=100,
+                           hrf="boynton",
+                           t=32,
+                           delta=2.25, tau=1.25, alpha=2,
+                           p=c(6, 16, 1, 1, 6, 0, 32)) {
+
+  ce <- convolve_events(model, tr, method, f, hrf, t, delta, tau, alpha, p)
+  rm <- run_model(d, ce, model, roi_weights, normalize, report = TRUE)
+
+  em <- list(model = model, rm = rm, ce = ce, tr = tr)
+  return(em)
+}
+
+
+#' @title plot_model
+#' @description Plots a manually constructed model.
+#' @import ggplot2
+#' @export
+#'
+#' @param model_evaluation The output from the evaluate_model function.
+#'
+#' @examples
+#' # prepare model specs
+#' model3 <- data.frame(event      = c("encoding", "delay", "response"),
+#'                      start_time = c(0,           2.65,    12.5),
+#'                      duration   = c(2.65,        9.85,    3))
+#'
+#'
+plot_model <- function(model_evaluation) {
+  # prepare af
+  af <- list(models = list(model_evaluation$model),
+             fitness = 0,
+             best = model_evaluation$ce,
+             tr = model_evaluation$tr)
+
+  # iterate over models
+  plot_events(af)
+}
+
+
+# a helper function for evaluating a model
 run_model <- function(d,
                       ce,
                       model,
@@ -155,34 +209,6 @@ run_model <- function(d,
   }
 
   return(list(fit = fit, d = d, c = coeffs, r2 = r2))
-}
-
-
-#' @title plot_model
-#' @description Plots a manually constructed model.
-#' @import ggplot2
-#' @export
-#'
-#' @param model A data frame containing information about the model to use and
-#' its events (event, start_time and duration).
-#' @param ce The output of convolve_events by using the model and the data we
-#' are testing against.
-#' @param tr MRI's repetition time.
-#'
-#'
-#' @examples
-#' # prepare model specs
-#' model3 <- data.frame(event      = c("encoding", "delay", "response"),
-#'                      start_time = c(0,           2.65,    12.5     ),
-#'                      duration   = c(2.65,        9.85,    3        ))
-#'
-#'
-plot_model <- function(model, ce, tr=2.5) {
-  # prepare af
-  af <- list(models = list(model), fitness = 0, best = ce, tr = tr)
-
-  # iterate over models
-  plot_events(af)
 }
 
 

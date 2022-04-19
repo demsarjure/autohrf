@@ -2,33 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-#' @title convolve_events
-#' @description Convolves events of a model with a generated HRF signal.
-#' @export
-#'
-#' @param model A data frame containing information about the model to use
-#' (event, start_time, duration).
-#' @param tr MRI's repetition time.
-#' @param method Can be "middle" or "mean".
-#' Middle will return integer results, mean will return floats.
-#' @param f Downsampling frequency.
-#' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
-#' @param t The t parameter for Boynton or SPM HRF generation.
-#' @param delta The delta parameter of Boynton's HRF.
-#' @param tau The tau parameter of Boynton's HRF.
-#' @param alpha The alpha parameter of Boynton's HRF.
-#' @param p The p parameter of SPM's HRF.
-#'
-#' @return A list containing convolved events, signal and time series.
-#'
-#' @examples
-#' # create the model
-#' m <- data.frame(event = c("encoding", "delay", "response"),
-#' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
-#'
-#' # convolve
-#' res <- convolve_events(m)
-#'
+# A helper function for convolving events of a model with a generated HRF
+# signal.
 convolve_events <- function(model,
                             tr=2.5,
                             method="middle",

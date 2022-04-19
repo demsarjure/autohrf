@@ -4,16 +4,10 @@
 \alias{plot_model}
 \title{plot_model}
 \usage{
-plot_model(model, ce, tr = 2.5)
+plot_model(model_evaluation)
 }
 \arguments{
-\item{model}{A data frame containing information about the model to use and
-its events (event, start_time and duration).}
-
-\item{ce}{The output of convolve_events by using the model and the data we
-are testing against.}
-
-\item{tr}{MRI's repetition time.}
+\item{model_evaluation}{The output from the evaluate_model function.}
 }
 \description{
 Plots a manually constructed model.
@@ -21,8 +15,8 @@ Plots a manually constructed model.
 \examples{
 # prepare model specs
 model3 <- data.frame(event      = c("encoding", "delay", "response"),
-                     start_time = c(0,           2.65,    12.5     ),
-                     duration   = c(2.65,        9.85,    3        ))
+                     start_time = c(0,           2.65,    12.5),
+                     duration   = c(2.65,        9.85,    3))
 
 
 }

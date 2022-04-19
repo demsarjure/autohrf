@@ -18,9 +18,6 @@ model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
 
-# convolve
-ce <- convolve_events(model)
-
 # set some weights
 roi_weights <-
   data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
@@ -29,6 +26,7 @@ roi_weights <-
 # run_model
 test_that("run_model", {
   # run_model
+  ce <- convolve_events(model)
   res <- run_model(df, ce, model, roi_weights = roi_weights)
 
   # test
@@ -38,12 +36,17 @@ test_that("run_model", {
   expect_equal(res$r2$weighted, 0.9, tolerance = tol)
 })
 
-# run_model
+# evaluate_model
 test_that("plot_model", {
-  plot <- plot_model(model, ce)
-  vdiffr::expect_doppelganger("plot_model output", plot)
+  expect_output(evaluate_model(df, model, roi_weights = roi_weights))
+
 })
 
+# plot_model
+test_that("plot_model", {
+  plot <- plot_model(em)
+  vdiffr::expect_doppelganger("plot_model output", plot)
+})
 
 # autohrf ----------------------------------------------------------------------
 # 3 events: encoding, delay, response

@@ -39,50 +39,37 @@ Next, we will construct three different models, one with 3 events, one with 4 ev
 ```{r}
 # 3 events: encoding, delay, response
 model3 <- data.frame(event      = c("encoding", "delay", "response"),
-                     start_time = c(0,           2.65,    12.5     ),
-                     duration   = c(2.65,        9.85,    3        ))
+                     start_time = c(0,           2.65,    12.5),
+                     duration   = c(2.65,        9.85,    3))
 
 # 4 events: fixation, target, delay, response
 model4 <- data.frame(event      = c("fixation", "target", "delay", "response"),
-                     start_time = c(0,           2.5,      2.65,    12.5     ),
-                     duration   = c(2.5,         0.1,      9.85,    3        ))
+                     start_time = c(0,           2.5,      2.65,    12.5),
+                     duration   = c(2.5,         0.1,      9.85,    3))
 
 # 5 events: fixation, target, delay, probe, response
 model5 <- data.frame(event      = c("fixation", "target", "delay", "probe", "response"),
-                     start_time = c(0,           2.5,      2.65,    12.5,    13        ),
-                     duration   = c(2.5,         0.1,      9.85,    0.5,     2.5       ))
+                     start_time = c(0,           2.5,      2.65,    12.5,    13),
+                     duration   = c(2.5,         0.1,      9.85,    0.5,     2.5))
 ```
 
 Once we construct our models we can use the **convolve_events** function to convolve the HRF signal based on the model with the actual data. Once we have that, we can use the **run_model** function to evaluate which model fits our data best. We can also use the **plot_model** function to visually inspect how model fits the underlying data.
 
 ```{r}
 # 3 events
-c3 <- convolve_events(model3)
-plot_model(model3, c3)
-rm3 <- run_model(df, c3, model3)
-
-# print the mean r2
-rm3$r2$mean
+em3 <- evaluate_model(df, model3)
+plot_model(em3)
 ```
 
 ```{r}
 # 4 events
-c4 <- convolve_events(model4)
-#plot_model(model4, c4)
-rm4 <- run_model(df, c4, model4)
-
-# print the mean r2
-rm4$r2$mean
+em4 <- evaluate_model(df, model4)
+plot_model(em4)
 ```
 
 ```{r}
-# 5 events
-c5 <- convolve_events(model5)
-#plot_model(model5, c5)
-rm5 <- run_model(df, c5, model5)
-
-# print the mean r2
-rm5$r2$mean
+em5 <- evaluate_model(df, model5)
+plot_model(em5)
 ```
 
 We can see that the best R2 score was achieved by our model with 5 events. So it would make sense to use that one for further assumed GLM modelling.

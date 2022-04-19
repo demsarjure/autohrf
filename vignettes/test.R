@@ -41,5 +41,10 @@ delta <- 2.25
 tau <- 1.25
 alpha <- 2
 p <- c(6, 16, 1, 1, 6, 0, 32)
+normalize <- TRUE
 roi_weights <- data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
                           weight = c(10, 20, 30))
+
+model <- data.frame(event      = c("encoding", "delay", "response"),
+                    start_time = c(0,           2.65,    12.5),
+                    duration   = c(2.65,        9.85,    3))
