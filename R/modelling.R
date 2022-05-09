@@ -15,10 +15,7 @@
 #' name of the region, weight a number that defines the importance of that roi,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
-#' @param normalize Whether to normalize the signal.
 #' @param tr MRI's repetition time.
-#' @param method Can be "middle" or "mean".
-#' Middle will return integer results, mean will return floats.
 #' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
 #' @param t The t parameter for Boynton or SPM HRF generation.
@@ -45,17 +42,15 @@
 evaluate_model <- function(d,
                            model,
                            roi_weights=NULL,
-                           normalize=TRUE,
                            tr=2.5,
-                           method="middle",
                            f=100,
                            hrf="boynton",
                            t=32,
                            delta=2.25, tau=1.25, alpha=2,
                            p=c(6, 16, 1, 1, 6, 0, 32)) {
 
-  ce <- convolve_events(model, tr, method, f, hrf, t, delta, tau, alpha, p)
-  rm <- run_model(d, ce, model, roi_weights, normalize, report = TRUE)
+  ce <- convolve_events(model, tr, f, hrf, t, delta, tau, alpha, p)
+  rm <- run_model(d, ce, model, roi_weights, report = TRUE)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr)
   return(em)
@@ -93,7 +88,6 @@ run_model <- function(d,
                       ce,
                       model,
                       roi_weights=NULL,
-                      normalize=TRUE,
                       report=FALSE) {
 
   # init local variables for CRAN check
@@ -127,14 +121,12 @@ run_model <- function(d,
 
   # run through rois
   for (roi in rois) {
-    # normalize if needed
-    if (normalize) {
-      ce$x[1:l, ] <- ce$x[1:l, ] /
-        matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
-               nrow = l,
-               ncol = n_events,
-               byrow = TRUE)
-    }
+    # normalize
+    ce$x[1:l, ] <- ce$x[1:l, ] /
+      matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
+              nrow = l,
+              ncol = n_events,
+              byrow = TRUE)
 
     # compute the linear model
     d[d$roi == roi, events] <- ce$x[1:l, ]
@@ -237,8 +229,6 @@ run_model <- function(d,
 #' solutions) in the genetic algorithm.
 #' @param tr MRI's repetition time.
 #' @param f Downsampling frequency.
-#' @param method Can be "middle" or "mean". Middle will return integer results,
-#' mean will return floats.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
 #' @param delta The delta parameter of Boynton's HRF.
@@ -280,7 +270,6 @@ autohrf <- function(d,
                     elitism = 0.1,
                     tr=2.5,
                     f=100,
-                    method = "middle",
                     hrf = "boynton",
                     t = 32,
                     delta = 2.25,
@@ -354,7 +343,6 @@ autohrf <- function(d,
         ce <- convolve_events(model = model,
                               tr = tr,
                               f = f,
-                              method = method,
                               hrf = hrf,
                               t = t,
                               delta = delta, tau = tau, alpha = alpha,
@@ -404,7 +392,6 @@ autohrf <- function(d,
     r <- convolve_events(model = new_models[[1]],
                          tr = tr,
                          f = f,
-                         method = method,
                          hrf = hrf,
                          t = t,
                          delta = delta, tau = tau, alpha = alpha,

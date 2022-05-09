@@ -6,7 +6,6 @@
 # signal.
 convolve_events <- function(model,
                             tr=2.5,
-                            method="middle",
                             f=100,
                             hrf="boynton",
                             t=32,
@@ -42,13 +41,13 @@ convolve_events <- function(model,
       tau = tau,
       alpha = alpha)
   }
-  x <- downsample(convolve_hrf(m, hrf_s), f, method)
+  x <- downsample(convolve_hrf(m, hrf_s), f)
 
   # time series
-  ts <- downsample(convolve_hrf(ts, hrf_s), f, method)
+  ts <- downsample(convolve_hrf(ts, hrf_s), f)
 
   # model
-  m <- downsample(m, f, method)
+  m <- downsample(m, f)
 
   # return results as a list
   return(list(m = m, x = x, ts = ts))
