@@ -1,4 +1,5 @@
 # this is a development test script
+library(ggplot2)
 
 # Load d
 df <- swm
@@ -41,7 +42,7 @@ tau <- 1.25
 alpha <- 2
 p <- c(6, 16, 1, 1, 6, 0, 32)
 roi_weights <- data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
-                          weight = c(10, 20, 30))
+                          weight = c(5, 5, 5))
 
 model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
@@ -63,6 +64,12 @@ model <- data.frame(event      = c("encoding", "delay", "response"),
                     duration   = c(2.65,        9.85,    3))
 em <- evaluate_model(d, model)
 plot_model(em)
+
+ggsave(paste0("plot_model.pdf"),
+       width = 3840,
+       height = 1920,
+       dpi = 500,
+       units = "px")
 
 # autohrf
 model3 <- data.frame(event = c("encoding", "delay", "response"),
