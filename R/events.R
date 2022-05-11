@@ -5,12 +5,14 @@
 # A helper function for convolving events of a model with a generated HRF
 # signal.
 convolve_events <- function(model,
-                            tr=2.5,
-                            f=100,
-                            hrf="boynton",
-                            t=32,
-                            delta=2.25, tau=1.25, alpha=2,
-                            p=c(6, 16, 1, 1, 6, 0, 32)) {
+                            tr = 2.5,
+                            f = 100,
+                            hrf = "boynton",
+                            t = 32,
+                            delta = 2.25,
+                            tau = 1.25,
+                            alpha = 2,
+                            p = c(6, 16, 1, 1, 6, 0, 32)) {
 
   len <- max(model$start_time) + max(model$duration) + 30
   len <- ceiling(len / tr) * tr

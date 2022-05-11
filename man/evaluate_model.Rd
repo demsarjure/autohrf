@@ -8,9 +8,7 @@ evaluate_model(
   d,
   model,
   roi_weights = NULL,
-  normalize = TRUE,
   tr = 2.5,
-  method = "middle",
   f = 100,
   hrf = "boynton",
   t = 32,
@@ -32,12 +30,7 @@ name of the region, weight a number that defines the importance of that roi,
 the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 will be twice as important.}
 
-\item{normalize}{Whether to normalize the signal.}
-
 \item{tr}{MRI's repetition time.}
-
-\item{method}{Can be "middle" or "mean".
-Middle will return integer results, mean will return floats.}
 
 \item{f}{Downsampling frequency.}
 
@@ -65,11 +58,8 @@ A function for evaluating the model against the data.
 m <- data.frame(event = c("encoding", "delay", "response"),
 start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
-# convolve
-ce <- convolve_events(m)
-
 # evaluate
 df <- swm
-res <- evaluate_model(df, ce, m)
+res <- evaluate_model(df, m)
 
 }

@@ -71,8 +71,16 @@ ggsave(paste0("plot_model.pdf"),
        dpi = 500,
        units = "px")
 
+plot_model(em, by_roi = TRUE)
+
+ggsave(paste0("plot_model_by_roi.pdf"),
+       width = 3840,
+       height = 3840,
+       dpi = 400,
+       units = "px")
+
 # autohrf
-model3 <- data.frame(event = c("encoding", "delay", "response"),
+model3 <- data.frame(event = c("enconvolveding", "delay", "response"),
                      start_time = c(0, 2.65, 12.5),
                      end_time = c(3, 12.5, 16))
 model4 <- data.frame(event = c("fixation", "target", "delay", "response"),

@@ -32,27 +32,33 @@
 #' m <- data.frame(event = c("encoding", "delay", "response"),
 #' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 #'
-#' # convolve
-#' ce <- convolve_events(m)
-#'
 #' # evaluate
 #' df <- swm
-#' res <- evaluate_model(df, ce, m)
+#' res <- evaluate_model(df, m)
 #'
 evaluate_model <- function(d,
                            model,
-                           roi_weights=NULL,
-                           tr=2.5,
-                           f=100,
-                           hrf="boynton",
-                           t=32,
-                           delta=2.25, tau=1.25, alpha=2,
-                           p=c(6, 16, 1, 1, 6, 0, 32)) {
+                           roi_weights = NULL,
+                           tr = 2.5,
+                           f = 100,
+                           hrf = "boynton",
+                           t = 32,
+                           delta = 2.25,
+                           tau = 1.25,
+                           alpha = 2,
+                           p = c(6, 16, 1, 1, 6, 0, 32)) {
 
   ce <- convolve_events(model, tr, f, hrf, t, delta, tau, alpha, p)
-  rm <- run_model(d, ce, model, roi_weights, report = TRUE)
+  rm <- run_model(d, ce, model, roi_weights)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr)
+
+  # report
+  cat("\nMean R2: ", rm$r2$mean)
+  cat("\nMedian R2: ", rm$r2$median)
+  cat("\nMin R2: ", rm$r2$min)
+  cat("\nWeighted R2: ", rm$r2$weighted, "\n")
+
   return(em)
 }
 
@@ -63,7 +69,8 @@ evaluate_model <- function(d,
 #' @export
 #'
 #' @param model_evaluation The output from the evaluate_model function.
-#'
+#' @param by_roi Whether to plot the fit for each ROI independently.
+#' 
 #' @examples
 #' # prepare model specs
 #' model3 <- data.frame(event      = c("encoding", "delay", "response"),
@@ -71,15 +78,19 @@ evaluate_model <- function(d,
 #'                      duration   = c(2.65,        9.85,    3))
 #'
 #'
-plot_model <- function(model_evaluation) {
+plot_model <- function(model_evaluation, by_roi = FALSE) {
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
              best = model_evaluation$ce,
              tr = model_evaluation$tr)
 
-  # iterate over models
-  plot_events(af)
+  # plot
+  if (by_roi) {
+    print(model_evaluation$rm$p)
+  } else {
+    plot_events(af)
+  }
 }
 
 
@@ -87,8 +98,7 @@ plot_model <- function(model_evaluation) {
 run_model <- function(d,
                       ce,
                       model,
-                      roi_weights=NULL,
-                      report=FALSE) {
+                      roi_weights = NULL) {
 
   # init local variables for CRAN check
   event <- NULL
@@ -177,30 +187,21 @@ run_model <- function(d,
          min = min(coeffs$r2),
          weighted = r2w)
 
-  # print the report
-  if (report) {
-    print(r2)
+  # store the visualization
+  p <- ggplot() +
+    geom_line(data = fit[fit$event == "x", ],
+              aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
+    geom_line(data = fit[fit$event %in% events, ],
+              aes(x = t, y = y, color = event, group = event)) +
+    geom_line(data = fit[fit$event == "y", ],
+              aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
+    ylab("") +
+    xlab("time") +
+    scale_fill_discrete(name = "event") +
+    scale_color_discrete(name = "event") +
+    facet_wrap(~ roi, scales = "free_y")
 
-    p <- ggplot() +
-      geom_line(data = fit[fit$event == "x", ],
-                aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
-      geom_line(data = fit[fit$event %in% events, ],
-                aes(x = t, y = y, color = event, group = event)) +
-      geom_line(data = fit[fit$event == "y", ],
-                aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
-      ylab("") +
-      xlab("time") +
-      scale_fill_discrete(name = "event") +
-      scale_color_discrete(name = "event") +
-      facet_wrap(~ roi, scales = "free_y")
-    print(p)
-
-    print(ggplot(fit, aes(t, y, color = event)) +
-      geom_line() +
-      facet_wrap(~ roi, scales = "free_y"))
-  }
-
-  return(list(fit = fit, d = d, c = coeffs, r2 = r2))
+  return(list(fit = fit, d = d, c = coeffs, r2 = r2, p = p))
 }
 
 
@@ -348,7 +349,7 @@ autohrf <- function(d,
                               delta = delta, tau = tau, alpha = alpha,
                               p = p)
 
-        rm <- run_model(d = d, ce = ce, model = model, report = FALSE)
+        rm <- run_model(d = d, ce = ce, model = model)
         r2 <- rm$r2$weighted
         fitness <- append(fitness, r2)
       }

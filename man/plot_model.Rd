@@ -4,10 +4,12 @@
 \alias{plot_model}
 \title{plot_model}
 \usage{
-plot_model(model_evaluation)
+plot_model(model_evaluation, by_roi = FALSE)
 }
 \arguments{
 \item{model_evaluation}{The output from the evaluate_model function.}
+
+\item{by_roi}{Whether to plot the fit for each ROI independently.}
 }
 \description{
 Plots a manually constructed model.

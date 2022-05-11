@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # A helper function for creating a Boynton HRF.
-create_boynton_hrf <- function(tr=2.5, t=32, delta=2.25, tau=1.25, alpha=2) {
+create_boynton_hrf <- function(tr = 2.5,
+                               t = 32,
+                               delta = 2.25,
+                               tau = 1.25,
+                               alpha = 2) {
   t <- c(0:(t / tr)) * tr
   r <- (t - delta) / tau
   h <- ((r ^ alpha) * exp(-r))
@@ -13,7 +17,9 @@ create_boynton_hrf <- function(tr=2.5, t=32, delta=2.25, tau=1.25, alpha=2) {
 }
 
 # A helper function for creating SPM HRF.
-create_spm_hrf <- function(tr=2.5, t=32, p=c(6, 16, 1, 1, 6, 0, 32)) {
+create_spm_hrf <- function(tr=2.5,
+                           t = 32,
+                           p = c(6, 16, 1, 1, 6, 0, 32)) {
   dt <- tr / t
   u <- c(0:(p[7] / dt)) - p[6] / dt;
   hrf <- dgamma(u * (dt / p[3]), p[1] / p[3]) -

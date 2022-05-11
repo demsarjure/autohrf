@@ -16,7 +16,6 @@ autohrf(
   elitism = 0.1,
   tr = 2.5,
   f = 100,
-  method = "middle",
   hrf = "boynton",
   t = 32,
   delta = 2.25,
@@ -54,9 +53,6 @@ solutions) in the genetic algorithm.}
 \item{tr}{MRI's repetition time.}
 
 \item{f}{Downsampling frequency.}
-
-\item{method}{Can be "middle" or "mean". Middle will return integer results,
-mean will return floats.}
 
 \item{hrf}{Method to use for HRF generation.}
 
