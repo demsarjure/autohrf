@@ -9,10 +9,8 @@ convolve_events <- function(model,
                             f = 100,
                             hrf = "boynton",
                             t = 32,
-                            delta = 2.25,
-                            tau = 1.25,
-                            alpha = 2,
-                            p = c(6, 16, 1, 1, 6, 0, 32)) {
+                            p_boynton = c(2.25, 1.25, 2),
+                            p_spm = c(6, 16, 1, 1, 6, 0)) {
 
   len <- max(model$start_time) + max(model$duration) + 30
   len <- ceiling(len / tr) * tr
@@ -34,14 +32,12 @@ convolve_events <- function(model,
 
   # hrf
   if (hrf == "spm") {
-    hrf_s <- create_spm_hrf(tr = e_tr, t = t, p = p)
+    hrf_s <- create_spm_hrf(tr = e_tr, t = t, p = p_spm)
   } else {
     hrf_s <- create_boynton_hrf(
       tr = e_tr,
       t = t,
-      delta = delta,
-      tau = tau,
-      alpha = alpha)
+      p = p_boynton)
   }
   x <- downsample(convolve_hrf(m, hrf_s), f)
 

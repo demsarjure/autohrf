@@ -37,10 +37,8 @@ tr <- 2.5
 f <- 100
 hrf <- "boynton"
 t <- 32
-delta <- 2.25
-tau <- 1.25
-alpha <- 2
-p <- c(6, 16, 1, 1, 6, 0, 32)
+p_boynton <- c(2.25, 1.25, 2)
+p_spm <- c(6, 16, 1, 1, 6, 0)
 roi_weights <- data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
                           weight = c(5, 5, 5))
 

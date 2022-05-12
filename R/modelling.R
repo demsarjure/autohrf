@@ -19,10 +19,8 @@
 #' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
 #' @param t The t parameter for Boynton or SPM HRF generation.
-#' @param delta The delta parameter of Boynton's HRF.
-#' @param tau The tau parameter of Boynton's HRF.
-#' @param alpha The alpha parameter of Boynton's HRF.
-#' @param p The p parameter of SPM's HRF.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
 #'
 #' @return Returns a list that contains the model, fits of events for
 #' each ROI, convolved events and the TR.
@@ -43,12 +41,10 @@ evaluate_model <- function(d,
                            f = 100,
                            hrf = "boynton",
                            t = 32,
-                           delta = 2.25,
-                           tau = 1.25,
-                           alpha = 2,
-                           p = c(6, 16, 1, 1, 6, 0, 32)) {
+                           p_boynton = c(2.25, 1.25, 2),
+                           p_spm = c(6, 16, 1, 1, 6, 0)) {
 
-  ce <- convolve_events(model, tr, f, hrf, t, delta, tau, alpha, p)
+  ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
   rm <- run_model(d, ce, model, roi_weights)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr)
@@ -70,7 +66,7 @@ evaluate_model <- function(d,
 #'
 #' @param model_evaluation The output from the evaluate_model function.
 #' @param by_roi Whether to plot the fit for each ROI independently.
-#' 
+#'
 #' @examples
 #' # prepare model specs
 #' model3 <- data.frame(event      = c("encoding", "delay", "response"),
@@ -232,10 +228,8 @@ run_model <- function(d,
 #' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
-#' @param delta The delta parameter of Boynton's HRF.
-#' @param tau The tau parameter of Boynton's HRF.
-#' @param alpha The alpha parameter of Boynton's HRF.
-#' @param p The p parameter of SPM's HRF.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -273,10 +267,8 @@ autohrf <- function(d,
                     f=100,
                     hrf = "boynton",
                     t = 32,
-                    delta = 2.25,
-                    tau = 1.25,
-                    alpha = 2,
-                    p = c(6, 16, 1, 1, 6, 0, 32)) {
+                    p_boynton = c(2.25, 1.25, 2),
+                    p_spm = c(6, 16, 1, 1, 6, 0)) {
 
   # parameters
   pop <- population
@@ -346,8 +338,8 @@ autohrf <- function(d,
                               f = f,
                               hrf = hrf,
                               t = t,
-                              delta = delta, tau = tau, alpha = alpha,
-                              p = p)
+                              p_boynton = p_boynton,
+                              p_spm = p_spm)
 
         rm <- run_model(d = d, ce = ce, model = model)
         r2 <- rm$r2$weighted
@@ -395,8 +387,8 @@ autohrf <- function(d,
                          f = f,
                          hrf = hrf,
                          t = t,
-                         delta = delta, tau = tau, alpha = alpha,
-                         p = p)
+                         p_boynton = c(2.25, 1.25, 2),
+                         p_spm = c(6, 16, 1, 1, 6, 0))
 
     results[[m]] <- list(models = new_models,
                          fitness = max_fitness,

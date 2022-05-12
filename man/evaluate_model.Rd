@@ -12,10 +12,8 @@ evaluate_model(
   f = 100,
   hrf = "boynton",
   t = 32,
-  delta = 2.25,
-  tau = 1.25,
-  alpha = 2,
-  p = c(6, 16, 1, 1, 6, 0, 32)
+  p_boynton = c(2.25, 1.25, 2),
+  p_spm = c(6, 16, 1, 1, 6, 0)
 )
 }
 \arguments{
@@ -38,13 +36,9 @@ will be twice as important.}
 
 \item{t}{The t parameter for Boynton or SPM HRF generation.}
 
-\item{delta}{The delta parameter of Boynton's HRF.}
+\item{p_boynton}{Parameters for the Boynton's HRF.}
 
-\item{tau}{The tau parameter of Boynton's HRF.}
-
-\item{alpha}{The alpha parameter of Boynton's HRF.}
-
-\item{p}{The p parameter of SPM's HRF.}
+\item{p_spm}{Parameters for the SPM HRF.}
 }
 \value{
 Returns a list that contains the model, fits of events for

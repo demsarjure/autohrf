@@ -5,30 +5,29 @@
 # A helper function for creating a Boynton HRF.
 create_boynton_hrf <- function(tr = 2.5,
                                t = 32,
-                               delta = 2.25,
-                               tau = 1.25,
-                               alpha = 2) {
-  t <- c(0:(t / tr)) * tr
-  r <- (t - delta) / tau
-  h <- ((r ^ alpha) * exp(-r))
-  h[t < delta] <- 0
-  h <- h / ((alpha ^ alpha) * exp(-alpha))
+                               p = c(2.25, 1.25, 2)) {
+  # p[1] = delta
+  # p[2] = tau
+  # p[3] = alpha
+  x <- c(0:(t / tr)) * tr
+  r <- (x - p[1]) / p[2]
+  h <- ((r ^ p[3]) * exp(-r))
+  h[x < p[1]] <- 0
+  h <- h / ((p[3] ^ p[3]) * exp(-p[3]))
   return(h)
 }
 
 # A helper function for creating SPM HRF.
-create_spm_hrf <- function(tr=2.5,
+create_spm_hrf <- function(tr = 2.5,
                            t = 32,
-                           p = c(6, 16, 1, 1, 6, 0, 32)) {
+                           p = c(6, 16, 1, 1, 6, 0)) {
   dt <- tr / t
-  u <- c(0:(p[7] / dt)) - p[6] / dt;
-  hrf <- dgamma(u * (dt / p[3]), p[1] / p[3]) -
+  u <- (c(0:(t / tr)) * t) - p[6] / dt
+  h <- dgamma(u * (dt / p[3]), p[1] / p[3]) -
          dgamma(u * (dt / p[4]), p[2] / p[4]) / p[5]
-  hrf <- hrf[c(0:(p[7] / tr)) * t + 1];
-  hrf <- hrf / max(hrf)
-  return(hrf)
+  h <- h / max(h)
+  return(h)
 }
-
 
 # A helper function for convolving HRF with a signal.
 convolve_hrf <- function(x, hrf_s) {
