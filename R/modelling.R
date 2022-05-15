@@ -15,17 +15,12 @@
 #' name of the region, weight a number that defines the importance of that roi,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
-#' @param normalize Whether to normalize the signal.
 #' @param tr MRI's repetition time.
-#' @param method Can be "middle" or "mean".
-#' Middle will return integer results, mean will return floats.
 #' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
 #' @param t The t parameter for Boynton or SPM HRF generation.
-#' @param delta The delta parameter of Boynton's HRF.
-#' @param tau The tau parameter of Boynton's HRF.
-#' @param alpha The alpha parameter of Boynton's HRF.
-#' @param p The p parameter of SPM's HRF.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
 #'
 #' @return Returns a list that contains the model, fits of events for
 #' each ROI, convolved events and the TR.
@@ -35,29 +30,31 @@
 #' m <- data.frame(event = c("encoding", "delay", "response"),
 #' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 #'
-#' # convolve
-#' ce <- convolve_events(m)
-#'
 #' # evaluate
 #' df <- swm
-#' res <- evaluate_model(df, ce, m)
+#' res <- evaluate_model(df, m)
 #'
 evaluate_model <- function(d,
                            model,
-                           roi_weights=NULL,
-                           normalize=TRUE,
-                           tr=2.5,
-                           method="middle",
-                           f=100,
-                           hrf="boynton",
-                           t=32,
-                           delta=2.25, tau=1.25, alpha=2,
-                           p=c(6, 16, 1, 1, 6, 0, 32)) {
+                           roi_weights = NULL,
+                           tr = 2.5,
+                           f = 100,
+                           hrf = "boynton",
+                           t = 32,
+                           p_boynton = c(2.25, 1.25, 2),
+                           p_spm = c(6, 16, 1, 1, 6, 0)) {
 
-  ce <- convolve_events(model, tr, method, f, hrf, t, delta, tau, alpha, p)
-  rm <- run_model(d, ce, model, roi_weights, normalize, report = TRUE)
+  ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
+  rm <- run_model(d, ce, model, roi_weights)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr)
+
+  # report
+  cat("\nMean R2: ", rm$r2$mean)
+  cat("\nMedian R2: ", rm$r2$median)
+  cat("\nMin R2: ", rm$r2$min)
+  cat("\nWeighted R2: ", rm$r2$weighted, "\n")
+
   return(em)
 }
 
@@ -68,6 +65,7 @@ evaluate_model <- function(d,
 #' @export
 #'
 #' @param model_evaluation The output from the evaluate_model function.
+#' @param by_roi Whether to plot the fit for each ROI independently.
 #'
 #' @examples
 #' # prepare model specs
@@ -76,15 +74,19 @@ evaluate_model <- function(d,
 #'                      duration   = c(2.65,        9.85,    3))
 #'
 #'
-plot_model <- function(model_evaluation) {
+plot_model <- function(model_evaluation, by_roi = FALSE) {
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
              best = model_evaluation$ce,
              tr = model_evaluation$tr)
 
-  # iterate over models
-  plot_events(af)
+  # plot
+  if (by_roi) {
+    print(model_evaluation$rm$p)
+  } else {
+    plot_events(af)
+  }
 }
 
 
@@ -92,9 +94,7 @@ plot_model <- function(model_evaluation) {
 run_model <- function(d,
                       ce,
                       model,
-                      roi_weights=NULL,
-                      normalize=TRUE,
-                      report=FALSE) {
+                      roi_weights = NULL) {
 
   # init local variables for CRAN check
   event <- NULL
@@ -127,14 +127,12 @@ run_model <- function(d,
 
   # run through rois
   for (roi in rois) {
-    # normalize if needed
-    if (normalize) {
-      ce$x[1:l, ] <- ce$x[1:l, ] /
-        matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
-               nrow = l,
-               ncol = n_events,
-               byrow = TRUE)
-    }
+    # normalize
+    ce$x[1:l, ] <- ce$x[1:l, ] /
+      matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
+              nrow = l,
+              ncol = n_events,
+              byrow = TRUE)
 
     # compute the linear model
     d[d$roi == roi, events] <- ce$x[1:l, ]
@@ -185,30 +183,21 @@ run_model <- function(d,
          min = min(coeffs$r2),
          weighted = r2w)
 
-  # print the report
-  if (report) {
-    print(r2)
+  # store the visualization
+  p <- ggplot() +
+    geom_line(data = fit[fit$event == "x", ],
+              aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
+    geom_line(data = fit[fit$event %in% events, ],
+              aes(x = t, y = y, color = event, group = event)) +
+    geom_line(data = fit[fit$event == "y", ],
+              aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
+    ylab("") +
+    xlab("time") +
+    scale_fill_discrete(name = "event") +
+    scale_color_discrete(name = "event") +
+    facet_wrap(~ roi, scales = "free_y")
 
-    p <- ggplot() +
-      geom_line(data = fit[fit$event == "x", ],
-                aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
-      geom_line(data = fit[fit$event %in% events, ],
-                aes(x = t, y = y, color = event, group = event)) +
-      geom_line(data = fit[fit$event == "y", ],
-                aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
-      ylab("") +
-      xlab("time") +
-      scale_fill_discrete(name = "event") +
-      scale_color_discrete(name = "event") +
-      facet_wrap(~ roi, scales = "free_y")
-    print(p)
-
-    print(ggplot(fit, aes(t, y, color = event)) +
-      geom_line() +
-      facet_wrap(~ roi, scales = "free_y"))
-  }
-
-  return(list(fit = fit, d = d, c = coeffs, r2 = r2))
+  return(list(fit = fit, d = d, c = coeffs, r2 = r2, p = p))
 }
 
 
@@ -237,14 +226,10 @@ run_model <- function(d,
 #' solutions) in the genetic algorithm.
 #' @param tr MRI's repetition time.
 #' @param f Downsampling frequency.
-#' @param method Can be "middle" or "mean". Middle will return integer results,
-#' mean will return floats.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
-#' @param delta The delta parameter of Boynton's HRF.
-#' @param tau The tau parameter of Boynton's HRF.
-#' @param alpha The alpha parameter of Boynton's HRF.
-#' @param p The p parameter of SPM's HRF.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -280,13 +265,10 @@ autohrf <- function(d,
                     elitism = 0.1,
                     tr=2.5,
                     f=100,
-                    method = "middle",
                     hrf = "boynton",
                     t = 32,
-                    delta = 2.25,
-                    tau = 1.25,
-                    alpha = 2,
-                    p = c(6, 16, 1, 1, 6, 0, 32)) {
+                    p_boynton = c(2.25, 1.25, 2),
+                    p_spm = c(6, 16, 1, 1, 6, 0)) {
 
   # parameters
   pop <- population
@@ -354,13 +336,12 @@ autohrf <- function(d,
         ce <- convolve_events(model = model,
                               tr = tr,
                               f = f,
-                              method = method,
                               hrf = hrf,
                               t = t,
-                              delta = delta, tau = tau, alpha = alpha,
-                              p = p)
+                              p_boynton = p_boynton,
+                              p_spm = p_spm)
 
-        rm <- run_model(d = d, ce = ce, model = model, report = FALSE)
+        rm <- run_model(d = d, ce = ce, model = model)
         r2 <- rm$r2$weighted
         fitness <- append(fitness, r2)
       }
@@ -404,11 +385,10 @@ autohrf <- function(d,
     r <- convolve_events(model = new_models[[1]],
                          tr = tr,
                          f = f,
-                         method = method,
                          hrf = hrf,
                          t = t,
-                         delta = delta, tau = tau, alpha = alpha,
-                         p = p)
+                         p_boynton = c(2.25, 1.25, 2),
+                         p_spm = c(6, 16, 1, 1, 6, 0))
 
     results[[m]] <- list(models = new_models,
                          fitness = max_fitness,

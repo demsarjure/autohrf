@@ -13,7 +13,7 @@ set.seed(27)
 # load data
 df <- swm
 
-# run_model --------------------------------------------------------------------
+# evaluate_model ---------------------------------------------------------------
 model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
@@ -23,29 +23,23 @@ roi_weights <-
   data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
              weight = c(2, 2, 4))
 
-# run_model
-test_that("run_model", {
-  # run_model
-  ce <- convolve_events(model)
-  res <- run_model(df, ce, model, roi_weights = roi_weights)
-
-  # test
-  expect_equal(res$r2$mean, 0.897, tolerance = tol)
-  expect_equal(res$r2$median, 0.92, tolerance = tol)
-  expect_equal(res$r2$min, 0.765, tolerance = tol)
-  expect_equal(res$r2$weighted, 0.9, tolerance = tol)
-})
+em <- evaluate_model(df, model, roi_weights = roi_weights)
 
 # evaluate_model
 test_that("plot_model", {
   expect_output(evaluate_model(df, model, roi_weights = roi_weights))
-
 })
 
 # plot_model
 test_that("plot_model", {
   plot <- plot_model(em)
   vdiffr::expect_doppelganger("plot_model output", plot)
+})
+
+# plot_model by roi
+test_that("plot_model_by_roi", {
+  plot <- plot_model(em, by_roi = TRUE)
+  vdiffr::expect_doppelganger("plot_model_by_roi output", plot)
 })
 
 # autohrf ----------------------------------------------------------------------

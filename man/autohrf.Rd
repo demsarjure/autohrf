@@ -16,13 +16,10 @@ autohrf(
   elitism = 0.1,
   tr = 2.5,
   f = 100,
-  method = "middle",
   hrf = "boynton",
   t = 32,
-  delta = 2.25,
-  tau = 1.25,
-  alpha = 2,
-  p = c(6, 16, 1, 1, 6, 0, 32)
+  p_boynton = c(2.25, 1.25, 2),
+  p_spm = c(6, 16, 1, 1, 6, 0)
 )
 }
 \arguments{
@@ -55,20 +52,13 @@ solutions) in the genetic algorithm.}
 
 \item{f}{Downsampling frequency.}
 
-\item{method}{Can be "middle" or "mean". Middle will return integer results,
-mean will return floats.}
-
 \item{hrf}{Method to use for HRF generation.}
 
 \item{t}{The t parameter for Boynton or SPM HRF generation.}
 
-\item{delta}{The delta parameter of Boynton's HRF.}
+\item{p_boynton}{Parameters for the Boynton's HRF.}
 
-\item{tau}{The tau parameter of Boynton's HRF.}
-
-\item{alpha}{The alpha parameter of Boynton's HRF.}
-
-\item{p}{The p parameter of SPM's HRF.}
+\item{p_spm}{Parameters for the SPM HRF.}
 }
 \value{
 A list containing model fits for each of the provided model

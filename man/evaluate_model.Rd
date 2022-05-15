@@ -8,16 +8,12 @@ evaluate_model(
   d,
   model,
   roi_weights = NULL,
-  normalize = TRUE,
   tr = 2.5,
-  method = "middle",
   f = 100,
   hrf = "boynton",
   t = 32,
-  delta = 2.25,
-  tau = 1.25,
-  alpha = 2,
-  p = c(6, 16, 1, 1, 6, 0, 32)
+  p_boynton = c(2.25, 1.25, 2),
+  p_spm = c(6, 16, 1, 1, 6, 0)
 )
 }
 \arguments{
@@ -32,12 +28,7 @@ name of the region, weight a number that defines the importance of that roi,
 the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 will be twice as important.}
 
-\item{normalize}{Whether to normalize the signal.}
-
 \item{tr}{MRI's repetition time.}
-
-\item{method}{Can be "middle" or "mean".
-Middle will return integer results, mean will return floats.}
 
 \item{f}{Downsampling frequency.}
 
@@ -45,13 +36,9 @@ Middle will return integer results, mean will return floats.}
 
 \item{t}{The t parameter for Boynton or SPM HRF generation.}
 
-\item{delta}{The delta parameter of Boynton's HRF.}
+\item{p_boynton}{Parameters for the Boynton's HRF.}
 
-\item{tau}{The tau parameter of Boynton's HRF.}
-
-\item{alpha}{The alpha parameter of Boynton's HRF.}
-
-\item{p}{The p parameter of SPM's HRF.}
+\item{p_spm}{Parameters for the SPM HRF.}
 }
 \value{
 Returns a list that contains the model, fits of events for
@@ -65,11 +52,8 @@ A function for evaluating the model against the data.
 m <- data.frame(event = c("encoding", "delay", "response"),
 start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
-# convolve
-ce <- convolve_events(m)
-
 # evaluate
 df <- swm
-res <- evaluate_model(df, ce, m)
+res <- evaluate_model(df, m)
 
 }
