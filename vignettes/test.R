@@ -77,6 +77,22 @@ ggsave(paste0("plot_model_by_roi.pdf"),
        dpi = 400,
        units = "px")
 
+# manual example 2
+# load sample data
+d <- swm
+
+# test model
+model <- data.frame(event = c("encoding", "delay", "response"),
+                    start_time = c(0, 0.15, 10),
+                    duration = c(0.15, 9.85, 3))
+
+# evaluate the model
+em <- evaluate_model(d, model, hrf = "spm")
+
+# plot fits
+plot_model(em)
+plot_model(em, by_roi = TRUE)
+
 # autohrf
 model3 <- data.frame(event = c("enconvolveding", "delay", "response"),
                      start_time = c(0, 2.65, 12.5),
