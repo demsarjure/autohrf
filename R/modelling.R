@@ -47,7 +47,7 @@ evaluate_model <- function(d,
   ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
   rm <- run_model(d, ce, model, roi_weights)
 
-  em <- list(model = model, rm = rm, ce = ce, tr = tr)
+  em <- list(model = model, rm = rm, ce = ce, tr = tr, coefficients = rm$c)
 
   # report
   cat("\nMean R2: ", rm$r2$mean)
@@ -74,7 +74,7 @@ evaluate_model <- function(d,
 #'                      duration   = c(2.65,        9.85,    3))
 #'
 #'
-plot_model <- function(model_evaluation, by_roi = FALSE) {
+plot_model <- function(model_evaluation, by_roi = FALSE, ncol = NULL, nrow = NULL) {
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
@@ -83,7 +83,15 @@ plot_model <- function(model_evaluation, by_roi = FALSE) {
 
   # plot
   if (by_roi) {
-    print(model_evaluation$rm$p)
+    if (is.null(ncol) && is.null(nrow)) {
+      model_evaluation$rm$p
+    } else if (is.null(ncol)) {
+      model_evaluation$rm$p + facet_wrap(roi ~ ., nrow = nrow)
+    } else if (is.null(nrow)) {
+      model_evaluation$rm$p + facet_wrap(roi ~ ., ncol = ncol)
+    } else {
+      model_evaluation$rm$p + facet_wrap(roi ~ ., ncol = ncol, nrow = nrow)
+    }
   } else {
     plot_events(af)
   }
