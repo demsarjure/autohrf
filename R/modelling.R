@@ -74,7 +74,12 @@ evaluate_model <- function(d,
 #'                      duration   = c(2.65,        9.85,    3))
 #'
 #'
-plot_model <- function(model_evaluation, by_roi = FALSE, ncol = NULL, nrow = NULL) {
+plot_model <- function(model_evaluation,
+                       by_roi = FALSE,
+                       ncol = NULL,
+                       nrow = NULL,
+                       scales = "free_y",
+                       rois = NULL) {
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
@@ -83,15 +88,37 @@ plot_model <- function(model_evaluation, by_roi = FALSE, ncol = NULL, nrow = NUL
 
   # plot
   if (by_roi) {
-    if (is.null(ncol) && is.null(nrow)) {
-      model_evaluation$rm$p
-    } else if (is.null(ncol)) {
-      model_evaluation$rm$p + facet_wrap(roi ~ ., nrow = nrow)
-    } else if (is.null(nrow)) {
-      model_evaluation$rm$p + facet_wrap(roi ~ ., ncol = ncol)
-    } else {
-      model_evaluation$rm$p + facet_wrap(roi ~ ., ncol = ncol, nrow = nrow)
+    # fit
+    fit <- model_evaluation$rm$fit
+
+    # filter
+    if (!is.null(rois)) {
+      fit <- fit %>% filter(roi %in% rois)
     }
+
+    # visualization
+    p <- ggplot() +
+      geom_line(data = fit[fit$event == "x", ],
+                aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
+      geom_line(data = fit[fit$event %in% events, ],
+                aes(x = t, y = y, color = event, group = event)) +
+      geom_line(data = fit[fit$event == "y", ],
+                aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
+      ylab("") +
+      xlab("time") +
+      scale_fill_discrete(name = "event") +
+      scale_color_discrete(name = "event") +
+      facet_wrap(~ roi, scales = scales)
+
+      if (is.null(ncol) && !is.null(nrow)) {
+        p <- p + facet_wrap(~ roi, nrow = nrow, scales = scales)
+      } else if (!is.null(ncol) && is.null(nrow)) {
+        p <- p + facet_wrap(~ roi, ncol = ncol, scales = scales)
+      } else {
+        p <- p + facet_wrap(~ roi, scales = scales)
+      }
+      # plot
+      p
   } else {
     plot_events(af)
   }
@@ -185,27 +212,13 @@ run_model <- function(d,
   # weighted r2
   r2w <- sum(coeffs$r2w) / sum(roi_weights$weight)
 
-  r2 <-
-    list(mean = mean(coeffs$r2),
-         median = median(coeffs$r2),
-         min = min(coeffs$r2),
-         weighted = r2w)
+  # store r2
+  r2 <- list(mean = mean(coeffs$r2),
+             median = median(coeffs$r2),
+             min = min(coeffs$r2),
+             weighted = r2w)
 
-  # store the visualization
-  p <- ggplot() +
-    geom_line(data = fit[fit$event == "x", ],
-              aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
-    geom_line(data = fit[fit$event %in% events, ],
-              aes(x = t, y = y, color = event, group = event)) +
-    geom_line(data = fit[fit$event == "y", ],
-              aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
-    ylab("") +
-    xlab("time") +
-    scale_fill_discrete(name = "event") +
-    scale_color_discrete(name = "event") +
-    facet_wrap(~ roi, scales = "free_y")
-
-  return(list(fit = fit, d = d, c = coeffs, r2 = r2, p = p))
+  return(list(fit = fit, d = d, c = coeffs, r2 = r2, events = events))
 }
 
 

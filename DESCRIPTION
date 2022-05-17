@@ -1,7 +1,7 @@
 Package: autohrf
 Type: Package
 Title: An R Package for Generating Data-Informed GLM Models in Task-Based fMRI Data Analysis
-Version: 0.3.0
+Version: 0.3.1
 Authors@R:
     c(person("Jure", "Demšar", , "jure.demsar@fri.uni-lj.si", c("cre", "aut")),
     person("Nina", "Purg", , "nina.purg@ff.uni-lj.si", c("aut")),
