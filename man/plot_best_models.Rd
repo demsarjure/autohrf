@@ -4,10 +4,14 @@
 \alias{plot_best_models}
 \title{plot_best_models}
 \usage{
-plot_best_models(autofit)
+plot_best_models(autofit, ncol = NULL, nrow = NULL)
 }
 \arguments{
 \item{autofit}{Output of the autohrf function.}
+
+\item{ncol}{Number of columns in the plot.}
+
+\item{nrow}{Number of rows in the plot.}
 }
 \description{
 Plots the best fitted model for each of the specs in autohrf.
@@ -30,7 +34,7 @@ model_specs <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, population=2, iter=2)
+autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 
 # plot best models
 plot_best_models(autofit)

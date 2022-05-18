@@ -57,18 +57,18 @@ Once we construct our models we can use the **convolve_events** function to conv
 
 ```{r}
 # 3 events
-em3 <- evaluate_model(df, model3)
+em3 <- evaluate_model(df, model3, tr = 2.5)
 plot_model(em3)
 ```
 
 ```{r}
 # 4 events
-em4 <- evaluate_model(df, model4)
+em4 <- evaluate_model(df, model4, tr = 2.5)
 plot_model(em4)
 ```
 
 ```{r}
-em5 <- evaluate_model(df, model5)
+em5 <- evaluate_model(df, model5, tr = 2.5)
 plot_model(em5)
 ```
 

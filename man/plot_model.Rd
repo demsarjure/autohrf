@@ -4,12 +4,27 @@
 \alias{plot_model}
 \title{plot_model}
 \usage{
-plot_model(model_evaluation, by_roi = FALSE)
+plot_model(
+  model_evaluation,
+  by_roi = FALSE,
+  ncol = NULL,
+  nrow = NULL,
+  scales = "free_y",
+  rois = NULL
+)
 }
 \arguments{
 \item{model_evaluation}{The output from the evaluate_model function.}
 
 \item{by_roi}{Whether to plot the fit for each ROI independently.}
+
+\item{ncol}{Number of columns in the facet wrap.}
+
+\item{nrow}{Number of rows in the facet wrap.}
+
+\item{scales}{Whether to free certain axes of the facet wrap.}
+
+\item{rois}{A subset of ROIs to visualize.}
 }
 \description{
 Plots a manually constructed model.

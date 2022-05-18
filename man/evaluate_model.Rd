@@ -8,12 +8,13 @@ evaluate_model(
   d,
   model,
   roi_weights = NULL,
-  tr = 2.5,
+  tr,
   f = 100,
-  hrf = "boynton",
+  hrf = "spm",
   t = 32,
   p_boynton = c(2.25, 1.25, 2),
-  p_spm = c(6, 16, 1, 1, 6, 0)
+  p_spm = c(6, 16, 1, 1, 6, 0),
+  report = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ will be twice as important.}
 \item{p_boynton}{Parameters for the Boynton's HRF.}
 
 \item{p_spm}{Parameters for the SPM HRF.}
+
+\item{report}{Whether to print a report of the evaluation results.}
 }
 \value{
 Returns a list that contains the model, fits of events for
@@ -54,6 +57,6 @@ start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
 # evaluate
 df <- swm
-res <- evaluate_model(df, m)
+res <- evaluate_model(df, m, tr = 2.5)
 
 }

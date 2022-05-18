@@ -7,6 +7,7 @@
 autohrf(
   d,
   model_specs,
+  tr,
   allow_overlap = FALSE,
   roi_weights = NULL,
   population = 100,
@@ -14,9 +15,8 @@ autohrf(
   mutation_rate = 0.1,
   mutation_factor = 0.05,
   elitism = 0.1,
-  tr = 2.5,
   f = 100,
-  hrf = "boynton",
+  hrf = "spm",
   t = 32,
   p_boynton = c(2.25, 1.25, 2),
   p_spm = c(6, 16, 1, 1, 6, 0)
@@ -29,6 +29,8 @@ the region, t timestamps and x values of the signal.}
 \item{model_specs}{A list of model specifications to use for fitting. Each
 specification is represented as a data frame containing information about it
 (event, start_time, end_time, min_duration and max_duration).}
+
+\item{tr}{MRI's repetition time.}
 
 \item{allow_overlap}{Whether to allow overlap between events.}
 
@@ -47,8 +49,6 @@ will be twice as important.}
 
 \item{elitism}{Whether to use elitism (promote a number of the best
 solutions) in the genetic algorithm.}
-
-\item{tr}{MRI's repetition time.}
 
 \item{f}{Downsampling frequency.}
 
@@ -86,6 +86,6 @@ model_specs <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, population=2, iter=2)
+autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 
 }

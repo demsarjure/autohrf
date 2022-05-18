@@ -23,11 +23,11 @@ roi_weights <-
   data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
              weight = c(2, 2, 4))
 
-em <- evaluate_model(df, model, roi_weights = roi_weights)
+em <- evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights)
 
 # evaluate_model
 test_that("plot_model", {
-  expect_output(evaluate_model(df, model, roi_weights = roi_weights))
+  expect_output(evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights))
 })
 
 # plot_model
@@ -61,15 +61,16 @@ model_specs <- list(model3, model4)
 
 # run autohrf
 autofit <- autohrf(df,
-                  model_specs,
-                  roi_weights = roi_weights,
-                  population = 2,
-                  iter = 2)
+                   model_specs,
+                   tr = 2.5,
+                   roi_weights = roi_weights,
+                   population = 2,
+                   iter = 2)
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.802, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.849, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.909, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.937, tolerance = tol)
 })
 
 # plot_best_models
@@ -78,7 +79,7 @@ test_that("plot_best_models", {
   vdiffr::expect_doppelganger("plot_best_models output", plot)
 })
 
-# print_best_models
-test_that("print_best_models", {
-  expect_output(print_best_models(autofit))
+# get_best_models
+test_that("get_best_models", {
+  expect_output(get_best_models(autofit))
 })

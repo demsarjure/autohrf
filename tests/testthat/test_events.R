@@ -29,7 +29,7 @@ model_specs <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, population = 2, iter = 2)
+autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 
 # convolve_events
 test_that("convolve_events", {
@@ -38,12 +38,12 @@ test_that("convolve_events", {
                   start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
   # convolve
-  r <- convolve_events(m)
+  r <- convolve_events(m, tr = 2.5)
 
   # test
   expect_equal(mean(r$m), 0.111, tolerance = tol)
-  expect_equal(mean(r$x), 0.135, tolerance = tol)
-  expect_equal(mean(r$ts), 0.333, tolerance = tol)
+  expect_equal(mean(r$x), 0.124, tolerance = tol)
+  expect_equal(mean(r$ts), 0.291, tolerance = tol)
 })
 
 # plot_events

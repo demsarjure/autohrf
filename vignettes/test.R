@@ -1,5 +1,6 @@
 # this is a development test script
 library(ggplot2)
+library(autohrf)
 
 # Load d
 df <- swm
@@ -16,13 +17,20 @@ model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
 models <- list(model3, model4)
 
 # auto
-autofit <- autohrf(df, models, population = 2, iter = 2)
+autofit <- autohrf(df, models, tr = 2.5, population = 50, iter = 50)
 
 plot_fitness(autofit)
 
 plot_best_models(autofit)
 
-print_best_models(autofit)
+m <- get_best_models(autofit)
+m1 <- m[[1]] # Fitness: 0.9313374
+m2 <- m[[2]] # Fitness: 0.9379862
+
+em <- evaluate_model(d, m1, tr = 2.5, hrf = "spm")
+plot_model(em)
+plot_model(em, by_roi = TRUE)
+
 
 # manual
 d <- df
@@ -35,7 +43,7 @@ mutation_factor <- 0.05
 elitism <- 0.1
 tr <- 2.5
 f <- 100
-hrf <- "boynton"
+hrf <- "spm"
 t <- 32
 p_boynton <- c(2.25, 1.25, 2)
 p_spm <- c(6, 16, 1, 1, 6, 0)
@@ -60,7 +68,7 @@ d <- swm
 model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
-em <- evaluate_model(d, model)
+em <- evaluate_model(d, model, tr = 2.5)
 plot_model(em)
 
 ggsave(paste0("plot_model.pdf"),
@@ -104,4 +112,4 @@ models <- list(model3, model4)
 autofit <- autohrf(df, models, population = 2, iter = 2)
 plot_fitness(autofit)
 plot_best_models(autofit)
-print_best_models(autofit)
+get_best_models(autofit)
