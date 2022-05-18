@@ -5,9 +5,9 @@
 # A helper function for convolving events of a model with a generated HRF
 # signal.
 convolve_events <- function(model,
-                            tr = 2.5,
+                            tr,
                             f = 100,
-                            hrf = "boynton",
+                            hrf = "spm",
                             t = 32,
                             p_boynton = c(2.25, 1.25, 2),
                             p_spm = c(6, 16, 1, 1, 6, 0)) {
@@ -53,7 +53,7 @@ convolve_events <- function(model,
 
 
 # A helper function for plotting events of a fitted model.
-plot_events <- function(af) {
+plot_events <- function(af, i = NULL) {
   # init local variables for CRAN check
   start_time <- NULL
   duration <- NULL
@@ -73,19 +73,24 @@ plot_events <- function(af) {
   model$ts <- model$event
 
   # construct the plot
-  ggplot() +
-    geom_line(data = d[d$ts == "ts", ], aes(x = x, y = y),
-              color = "black", size = 1, alpha = 0.75) +
-    geom_line(data = d[d$ts != "ts", ],
-              aes(x = x, y = y, color = ts, group = ts)) +
-    geom_rect(data = model, aes(xmin = start_time,
-                                xmax = start_time + duration,
-                                ymax = 0,
-                                ymin = -0.1,
-                                color = ts,
-                                fill = ts)) +
-    scale_color_brewer(type = "qual", palette = "Set1", name = "Event") +
-    scale_fill_brewer(type = "qual", palette = "Set1", name = "Event") +
-    ylab("") +
-    xlab("Time")
+  p <- ggplot() +
+      geom_line(data = d[d$ts == "ts", ], aes(x = x, y = y),
+                color = "black", size = 1, alpha = 0.75) +
+      geom_line(data = d[d$ts != "ts", ],
+                aes(x = x, y = y, color = ts, group = ts)) +
+      geom_rect(data = model, aes(xmin = start_time,
+                                  xmax = start_time + duration,
+                                  ymax = 0,
+                                  ymin = -0.1,
+                                  color = ts,
+                                  fill = ts)) +
+      scale_color_brewer(type = "qual", palette = "Set1", name = "Event") +
+      scale_fill_brewer(type = "qual", palette = "Set1", name = "Event") +
+      ylab("") +
+      xlab("Time")
+
+  if (!is.null(i))
+    p <- p + ggtitle(paste0("Model ", i))
+
+  p
 }

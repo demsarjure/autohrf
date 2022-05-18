@@ -21,6 +21,7 @@
 #' @param t The t parameter for Boynton or SPM HRF generation.
 #' @param p_boynton Parameters for the Boynton's HRF.
 #' @param p_spm Parameters for the SPM HRF.
+#' @param report Whether to print a report of the evaluation results.
 #'
 #' @return Returns a list that contains the model, fits of events for
 #' each ROI, convolved events and the TR.
@@ -32,17 +33,18 @@
 #'
 #' # evaluate
 #' df <- swm
-#' res <- evaluate_model(df, m)
+#' res <- evaluate_model(df, m, tr = 2.5)
 #'
 evaluate_model <- function(d,
                            model,
                            roi_weights = NULL,
-                           tr = 2.5,
+                           tr,
                            f = 100,
-                           hrf = "boynton",
+                           hrf = "spm",
                            t = 32,
                            p_boynton = c(2.25, 1.25, 2),
-                           p_spm = c(6, 16, 1, 1, 6, 0)) {
+                           p_spm = c(6, 16, 1, 1, 6, 0),
+                           report = TRUE) {
 
   ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
   rm <- run_model(d, ce, model, roi_weights)
@@ -50,10 +52,12 @@ evaluate_model <- function(d,
   em <- list(model = model, rm = rm, ce = ce, tr = tr, coefficients = rm$c)
 
   # report
-  cat("\nMean R2: ", rm$r2$mean)
-  cat("\nMedian R2: ", rm$r2$median)
-  cat("\nMin R2: ", rm$r2$min)
-  cat("\nWeighted R2: ", rm$r2$weighted, "\n")
+  if (report) {
+    cat("\nMean R2: ", rm$r2$mean)
+    cat("\nMedian R2: ", rm$r2$median)
+    cat("\nMin R2: ", rm$r2$min)
+    cat("\nWeighted R2: ", rm$r2$weighted, "\n")
+  }
 
   return(em)
 }
@@ -62,10 +66,16 @@ evaluate_model <- function(d,
 #' @title plot_model
 #' @description Plots a manually constructed model.
 #' @import ggplot2
+#' @import tidyverse
+#' @importFrom magrittr %>%
 #' @export
 #'
 #' @param model_evaluation The output from the evaluate_model function.
 #' @param by_roi Whether to plot the fit for each ROI independently.
+#' @param ncol Number of columns in the facet wrap.
+#' @param nrow Number of rows in the facet wrap.
+#' @param scales Whether to free certain axes of the facet wrap.
+#' @param rois A subset of ROIs to visualize.
 #'
 #' @examples
 #' # prepare model specs
@@ -80,6 +90,12 @@ plot_model <- function(model_evaluation,
                        nrow = NULL,
                        scales = "free_y",
                        rois = NULL) {
+  # init local variables for CRAN check
+  event <- NULL
+  events <- NULL
+  roi <- NULL
+  y <- NULL
+
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
@@ -225,7 +241,8 @@ run_model <- function(d,
 #' @title autohrf
 #' @description A function that automatically finds the parameters of model's
 #' that best match the underlying data.
-#' @import gtools stats
+#' @import gtools
+#' @import stats
 #' @importFrom lubridate day hour minute second seconds_to_period
 #' @export
 #'
@@ -234,18 +251,18 @@ run_model <- function(d,
 #' @param model_specs A list of model specifications to use for fitting. Each
 #' specification is represented as a data frame containing information about it
 #' (event, start_time, end_time, min_duration and max_duration).
-#' @param population The size of the population in the genetic algorithm.
+#' @param tr MRI's repetition time.
 #' @param allow_overlap Whether to allow overlap between events.
 #' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
 #' name of the region, weight a number that defines the importance of that roi,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
 #' @param iter Number of iterations in the genetic algorithm.
+#' @param population The size of the population in the genetic algorithm.
 #' @param mutation_rate The mutation rate in the genetic algorithm.
 #' @param mutation_factor The mutation factor in the genetic algorithm.
 #' @param elitism Whether to use elitism (promote a number of the best
 #' solutions) in the genetic algorithm.
-#' @param tr MRI's repetition time.
 #' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
@@ -273,10 +290,11 @@ run_model <- function(d,
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 #'
 autohrf <- function(d,
                     model_specs,
+                    tr,
                     allow_overlap = FALSE,
                     roi_weights = NULL,
                     population = 100,
@@ -284,9 +302,8 @@ autohrf <- function(d,
                     mutation_rate = 0.1,
                     mutation_factor = 0.05,
                     elitism = 0.1,
-                    tr=2.5,
-                    f=100,
-                    hrf = "boynton",
+                    f = 100,
+                    hrf = "spm",
                     t = 32,
                     p_boynton = c(2.25, 1.25, 2),
                     p_spm = c(6, 16, 1, 1, 6, 0)) {
@@ -354,17 +371,18 @@ autohrf <- function(d,
                             start_time = start_time[[j]],
                             duration = end_time[[j]] - start_time[[j]])
 
-        ce <- convolve_events(model = model,
-                              tr = tr,
-                              f = f,
-                              hrf = hrf,
-                              t = t,
-                              p_boynton = p_boynton,
-                              p_spm = p_spm)
+        em <- evaluate_model(d = d,
+                             model = model,
+                             roi_weights = roi_weights,
+                             tr = tr,
+                             f = f,
+                             hrf = hrf,
+                             t = t,
+                             p_boynton = p_boynton,
+                             p_spm = p_spm,
+                             report = FALSE)
 
-        rm <- run_model(d = d, ce = ce, model = model)
-        r2 <- rm$r2$weighted
-        fitness <- append(fitness, r2)
+        fitness <- append(fitness, em$rm$r2$weighted)
       }
 
       # sort
@@ -622,6 +640,7 @@ create_child <- function(start_time,
   return(child)
 }
 
+
 #' @title plot_fitness
 #' @description Plots how fitness changed through iterations of autohrf.
 #' Use this to invesitage whether your solution converged.
@@ -648,7 +667,7 @@ create_child <- function(start_time,
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 #'
 #' # plot fitness
 #' plot_fitness(autofit)
@@ -687,6 +706,8 @@ plot_fitness <- function(autofit) {
 #' @export
 #'
 #' @param autofit Output of the autohrf function.
+#' @param ncol Number of columns in the plot.
+#' @param nrow Number of rows in the plot.
 #'
 #' @examples
 #' # prepare model specs
@@ -706,30 +727,35 @@ plot_fitness <- function(autofit) {
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 #'
 #' # plot best models
 #' plot_best_models(autofit)
 #'
-plot_best_models <- function(autofit) {
+plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
   # plot list storage
   graphs <- list()
   i <- 1
 
   # iterate over models
   for (af in autofit) {
-    graphs[[i]] <- plot_events(af)
+    graphs[[i]] <- plot_events(af, i)
     i <- i + 1
   }
 
+  if (is.null(ncol) && is.null(nrow)) {
+    nrow <- i - 1
+    ncol <- 1
+  }
+
   # plot grid
-  cowplot::plot_grid(plotlist = graphs, nrow = i - 1, ncol = 1, scale = 0.95)
+  cowplot::plot_grid(plotlist = graphs, nrow = nrow, ncol = ncol, scale = 0.95)
 }
 
 
-#' @title print_best_models
-#' @description Prints the best fitted model for each of the specs used in
-#' autohrf.
+#' @title get_best_models
+#' @description Returns and prints the best fitted model for each of the specs
+#' used in autohrf.
 #' @import utils
 #' @export
 #'
@@ -753,20 +779,27 @@ plot_best_models <- function(autofit) {
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, population=2, iter=2)
+#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
 #'
 #' # print best models
-#' print_best_models(autofit)
+#' get_best_models(autofit)
 #'
-print_best_models <- function(autofit) {
+get_best_models <- function(autofit) {
+  # best models storage
+  models <- list()
+
   # iterate over models
   i <- 1
   cat("\n----------------------------------------\n")
   for (af in autofit) {
     cat("\nModel", i, "\n\n")
-    i <- i + 1
+    models[[i]] <- af$models[[1]]
     cat("Fitness: ", tail(af$fitness, 1), "\n\n")
     print(af$models[[1]])
     cat("\n----------------------------------------\n")
+
+    i <- i + 1
   }
+
+  return(models)
 }
