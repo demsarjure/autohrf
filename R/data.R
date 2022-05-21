@@ -24,7 +24,7 @@
 #' \itemize{
 #' \item \code{roi} region of interest.
 #' \item \code{time} time stamp.
-#' \item \code{x} BOLD value.
+#' \item \code{y} BOLD value.
 #' }
 #' }
 #' }

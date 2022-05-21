@@ -27,11 +27,11 @@ model4 <- data.frame(
   end_time     = c(2.5,        3,        12.5,    15.5)
 )
 
-model_specs <- list(model3, model4)
+model_constraints <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 
 # print best models
 get_best_models(autofit)

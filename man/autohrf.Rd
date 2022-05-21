@@ -6,38 +6,38 @@
 \usage{
 autohrf(
   d,
-  model_specs,
+  model_constraints,
   tr,
-  allow_overlap = FALSE,
   roi_weights = NULL,
+  allow_overlap = FALSE,
   population = 100,
   iter = 100,
   mutation_rate = 0.1,
   mutation_factor = 0.05,
   elitism = 0.1,
-  f = 100,
   hrf = "spm",
   t = 32,
   p_boynton = c(2.25, 1.25, 2),
-  p_spm = c(6, 16, 1, 1, 6, 0)
+  p_spm = c(6, 16, 1, 1, 6, 0),
+  f = 100
 )
 }
 \arguments{
-\item{d}{A dataframe with the signal data: roi, t and x. ROI is the name of
-the region, t timestamps and x values of the signal.}
+\item{d}{A dataframe with the signal data: roi, t and y. ROI is the name of
+the region, t is the timestamp and y the value of the signal.}
 
-\item{model_specs}{A list of model specifications to use for fitting. Each
-specification is represented as a data frame containing information about it
-(event, start_time, end_time, min_duration and max_duration).}
+\item{model_constraints}{A list of model specifications to use for fitting.
+Each specification is represented as a data frame containing information
+about it (event, start_time, end_time, min_duration and max_duration).}
 
 \item{tr}{MRI's repetition time.}
-
-\item{allow_overlap}{Whether to allow overlap between events.}
 
 \item{roi_weights}{A data frame with ROI weights: roi, weight. ROI is the
 name of the region, weight a number that defines the importance of that roi,
 the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 will be twice as important.}
+
+\item{allow_overlap}{Whether to allow overlap between events.}
 
 \item{population}{The size of the population in the genetic algorithm.}
 
@@ -47,10 +47,8 @@ will be twice as important.}
 
 \item{mutation_factor}{The mutation factor in the genetic algorithm.}
 
-\item{elitism}{Whether to use elitism (promote a number of the best
+\item{elitism}{The degree of elitism (promote a percentage of the best
 solutions) in the genetic algorithm.}
-
-\item{f}{Downsampling frequency.}
 
 \item{hrf}{Method to use for HRF generation.}
 
@@ -59,6 +57,8 @@ solutions) in the genetic algorithm.}
 \item{p_boynton}{Parameters for the Boynton's HRF.}
 
 \item{p_spm}{Parameters for the SPM HRF.}
+
+\item{f}{Upsampling factor.}
 }
 \value{
 A list containing model fits for each of the provided model
@@ -82,10 +82,10 @@ model4 <- data.frame(
   end_time     = c(2.5,        3,        12.5,    15.5)
 )
 
-model_specs <- list(model3, model4)
+model_constraints <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 
 }

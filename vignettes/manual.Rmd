@@ -32,7 +32,7 @@ df <- swm
 head(df)
 ```
 
-The loaded data frame has 504 observations, each with 3 variables (roi, t, and x) **roi** denotes the region of interest, **t** the time stamp and **x** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
+The loaded data frame has 504 observations, each with 3 variables (roi, t, and y) **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
 
 Next, we will construct three different models, one with 3 events, one with 4 events and one with 5 events. When manually constructing events we need to create a data frame which has an entry (observation) for each of the events in the model. For each of the events we need to provide its name, its start time and its duration.
 

@@ -57,11 +57,11 @@ model4 <- data.frame(
   end_time     = c(2.5,        3,        12.5,    15.5)
 )
 
-model_specs <- list(model3, model4)
+model_constraints <- list(model3, model4)
 
 # run autohrf
 autofit <- autohrf(df,
-                   model_specs,
+                   model_constraints,
                    tr = 2.5,
                    roi_weights = roi_weights,
                    population = 2,
@@ -69,8 +69,8 @@ autofit <- autohrf(df,
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.909, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.937, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.896, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.892, tolerance = tol)
 })
 
 # plot_best_models

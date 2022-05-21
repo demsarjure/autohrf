@@ -7,20 +7,20 @@
 #' @import ggplot2
 #' @export
 #'
-#' @param d A data frame with the signal data: roi, t and x.
-#' ROI is the name of the region, t time stamps and x values of the signal.
+#' @param d A dataframe with the signal data: roi, t and y. ROI is the name of
+#' the region, t is the timestamp and y the value of the signal.
 #' @param model A data frame containing information about the model to use
 #' and its events (event, start_time and duration).
+#' @param tr MRI's repetition time.
 #' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
 #' name of the region, weight a number that defines the importance of that roi,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
-#' @param tr MRI's repetition time.
-#' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
 #' @param t The t parameter for Boynton or SPM HRF generation.
 #' @param p_boynton Parameters for the Boynton's HRF.
 #' @param p_spm Parameters for the SPM HRF.
+#' @param f Upsampling factor.
 #' @param report Whether to print a report of the evaluation results.
 #'
 #' @return Returns a list that contains the model, fits of events for
@@ -37,13 +37,13 @@
 #'
 evaluate_model <- function(d,
                            model,
-                           roi_weights = NULL,
                            tr,
-                           f = 100,
+                           roi_weights = NULL,
                            hrf = "spm",
                            t = 32,
                            p_boynton = c(2.25, 1.25, 2),
                            p_spm = c(6, 16, 1, 1, 6, 0),
+                           f = 100,
                            report = TRUE) {
 
   ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
@@ -114,7 +114,7 @@ plot_model <- function(model_evaluation,
 
     # visualization
     p <- ggplot() +
-      geom_line(data = fit[fit$event == "x", ],
+      geom_line(data = fit[fit$event == "y_m", ],
                 aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
       geom_line(data = fit[fit$event %in% events, ],
                 aes(x = t, y = y, color = event, group = event)) +
@@ -172,38 +172,38 @@ run_model <- function(d,
   }
 
   # expand the dataframe
-  d[, c("(Intercept)", events, "y", "r")] <- 0
+  d[, c("(Intercept)", events, "y_m", "r")] <- 0
   d[, "(Intercept)"] <- 1
   l <- dim(d[d$roi == rois[1], ])[1]
 
+  # normalize
+  ce$y[1:l, ] <- ce$y[1:l, ] /
+    matrix(apply(ce$y[1:l, ], 2, FUN = function(x) max(abs(x))),
+            nrow = l,
+            ncol = n_events,
+            byrow = TRUE)
+
   # run through rois
   for (roi in rois) {
-    # normalize
-    ce$x[1:l, ] <- ce$x[1:l, ] /
-      matrix(apply(ce$x[1:l, ], 2, FUN = function(x) max(abs(x))),
-              nrow = l,
-              ncol = n_events,
-              byrow = TRUE)
-
     # compute the linear model
-    d[d$roi == roi, events] <- ce$x[1:l, ]
-    m <- lm(formula(d[, c("x", events)]), d[d$roi == roi, ])
+    d[d$roi == roi, events] <- ce$y[1:l, ]
+    m <- lm(formula(d[, c("y", events)]), d[d$roi == roi, ])
 
     # save component timeseries
-    d[d$roi == roi, events] <- ce$x[1:l, ] *
+    d[d$roi == roi, events] <- ce$y[1:l, ] *
                                matrix(m$coefficients[events],
                                       l, length(model$event), byrow = TRUE)
     d[d$roi == roi, "(Intercept)"] <- m$coefficients["(Intercept)"][[1]]
-    d[d$roi == roi, "y"] <-
+    d[d$roi == roi, "y_m"] <-
       apply(as.matrix(d[d$roi == roi, c("(Intercept)", events)]), 1, FUN = sum)
     d[d$roi == roi, "r"] <- m$residuals
     d[d$roi == roi, events] <-
-      ce$x[1:l, ] *
+      ce$y[1:l, ] *
       matrix(m$coefficients[events], l, length(model$event), byrow = TRUE) +
       m$coefficients["(Intercept)"][[1]]
 
     # calculate r2
-    r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "x"])
+    r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "y_m"])
 
     # calculate r2w
     r2w <- r2 * roi_weights[roi_weights$roi == roi, "weight"]
@@ -216,14 +216,14 @@ run_model <- function(d,
                        r2w = r2w)))
   }
 
-  for (v in c("x", events, "y")) {
+  for (v in c("y", events, "y_m")) {
     t <- d[, c("roi", "t", v)]
     t$event <- v
     names(t) <- c("roi", "t", "y", "event")
     fit <- rbind(fit, t)
   }
 
-  fit$event <- factor(fit$event, levels = c("x", events, "y"), ordered = TRUE)
+  fit$event <- factor(fit$event, levels = c("y", events, "y_m"), ordered = TRUE)
 
   # weighted r2
   r2w <- sum(coeffs$r2w) / sum(roi_weights$weight)
@@ -246,28 +246,28 @@ run_model <- function(d,
 #' @importFrom lubridate day hour minute second seconds_to_period
 #' @export
 #'
-#' @param d A dataframe with the signal data: roi, t and x. ROI is the name of
-#' the region, t timestamps and x values of the signal.
-#' @param model_specs A list of model specifications to use for fitting. Each
-#' specification is represented as a data frame containing information about it
-#' (event, start_time, end_time, min_duration and max_duration).
+#' @param d A dataframe with the signal data: roi, t and y. ROI is the name of
+#' the region, t is the timestamp and y the value of the signal.
+#' @param model_constraints A list of model specifications to use for fitting.
+#' Each specification is represented as a data frame containing information
+#' about it (event, start_time, end_time, min_duration and max_duration).
 #' @param tr MRI's repetition time.
-#' @param allow_overlap Whether to allow overlap between events.
 #' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
 #' name of the region, weight a number that defines the importance of that roi,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
+#' @param allow_overlap Whether to allow overlap between events.
 #' @param iter Number of iterations in the genetic algorithm.
 #' @param population The size of the population in the genetic algorithm.
 #' @param mutation_rate The mutation rate in the genetic algorithm.
 #' @param mutation_factor The mutation factor in the genetic algorithm.
-#' @param elitism Whether to use elitism (promote a number of the best
+#' @param elitism The degree of elitism (promote a percentage of the best
 #' solutions) in the genetic algorithm.
-#' @param f Downsampling frequency.
 #' @param hrf Method to use for HRF generation.
 #' @param t The t parameter for Boynton or SPM HRF generation.
 #' @param p_boynton Parameters for the Boynton's HRF.
 #' @param p_spm Parameters for the SPM HRF.
+#' @param f Upsampling factor.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -286,27 +286,27 @@ run_model <- function(d,
 #'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
-#' model_specs <- list(model3, model4)
+#' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 #'
 autohrf <- function(d,
-                    model_specs,
+                    model_constraints,
                     tr,
-                    allow_overlap = FALSE,
                     roi_weights = NULL,
+                    allow_overlap = FALSE,
                     population = 100,
                     iter = 100,
                     mutation_rate = 0.1,
                     mutation_factor = 0.05,
                     elitism = 0.1,
-                    f = 100,
                     hrf = "spm",
                     t = 32,
                     p_boynton = c(2.25, 1.25, 2),
-                    p_spm = c(6, 16, 1, 1, 6, 0)) {
+                    p_spm = c(6, 16, 1, 1, 6, 0),
+                    f = 100) {
 
   # parameters
   pop <- population
@@ -318,12 +318,12 @@ autohrf <- function(d,
   results <- list()
 
   # iterate over all models
-  n_models <- length(model_specs)
+  n_models <- length(model_constraints)
   total_iterations <- n_models * iter
   execution_time <- Sys.time()
   for (m in 1:n_models) {
     # get model
-    current_model <- model_specs[[m]]
+    current_model <- model_constraints[[m]]
     n_events <- nrow(current_model)
 
     # set min duration to default if not set
@@ -421,17 +421,17 @@ autohrf <- function(d,
     }
 
     #evaluate the best model
-    r <- convolve_events(model = new_models[[1]],
-                         tr = tr,
-                         f = f,
-                         hrf = hrf,
-                         t = t,
-                         p_boynton = c(2.25, 1.25, 2),
-                         p_spm = c(6, 16, 1, 1, 6, 0))
+    ce <- convolve_events(model = new_models[[1]],
+                          tr = tr,
+                          f = f,
+                          hrf = hrf,
+                          t = t,
+                          p_boynton = c(2.25, 1.25, 2),
+                          p_spm = c(6, 16, 1, 1, 6, 0))
 
     results[[m]] <- list(models = new_models,
                          fitness = max_fitness,
-                         best = r,
+                         best = ce,
                          tr = tr)
   }
 
@@ -598,18 +598,26 @@ create_child <- function(start_time,
 
   # mutations modify values
   for (k in 1:n_events) {
-    # time
+  # add some random value (depends on m_factor)
+    duration <- end[k] - start[k]
+    mutation <- duration * m_factor
+
+    # start
     rand <- runif(1)
     if (rand < m_rate) {
-      # add some random value (depends on m_factor)
-      start[k] <- start[k] + runif(1, -m_factor, m_factor)
-      end[k] <- end[k] + runif(1, -m_factor, m_factor)
+      start[k] <- start[k] + runif(1, -mutation, mutation)
+    }
 
-      if (end[k] < start[k]) {
-        temp <- start[k]
-        start[k] <- end[k]
-        end[k] <- temp
-      }
+    # end
+    rand <- runif(1)
+    if (rand < m_rate) {
+      end[k] <- end[k] + runif(1, -mutation, mutation)
+    }
+
+    if (end[k] < start[k]) {
+      temp <- start[k]
+      start[k] <- end[k]
+      end[k] <- temp
     }
   }
 
@@ -663,11 +671,11 @@ create_child <- function(start_time,
 #'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
-#' model_specs <- list(model3, model4)
+#' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 #'
 #' # plot fitness
 #' plot_fitness(autofit)
@@ -723,11 +731,11 @@ plot_fitness <- function(autofit) {
 #'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
-#' model_specs <- list(model3, model4)
+#' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 #'
 #' # plot best models
 #' plot_best_models(autofit)
@@ -775,11 +783,11 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #'   end_time     = c(2.5,        3,        12.5,    15.5)
 #' )
 #'
-#' model_specs <- list(model3, model4)
+#' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_specs, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
 #'
 #' # print best models
 #' get_best_models(autofit)
