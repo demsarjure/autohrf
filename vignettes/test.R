@@ -83,14 +83,19 @@ library(devtools)
 install_github("demsarjure/autohrf")
 library(autohrf)
 
-# load data
-d <- swm
+# single event
+model <- data.frame(event      = "encoding",
+                    start_time = 0,
+                    duration   = 10)
+em <- evaluate_model(swm, model, tr = 2.5)
+plot_model(em)
+plot_model(em, by_roi=TRUE)
 
 # manual evaluation
 model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
-em <- evaluate_model(d, model, tr = 2.5)
+em <- evaluate_model(swm, model, tr = 2.5)
 plot_model(em, by_roi = TRUE,
            rois = c("R_2_ROI", "L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"))
 

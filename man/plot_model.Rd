@@ -6,7 +6,7 @@
 \usage{
 plot_model(
   model_evaluation,
-  by_roi = TRUE,
+  by_roi = FALSE,
   ncol = NULL,
   nrow = NULL,
   scales = "free_y",
