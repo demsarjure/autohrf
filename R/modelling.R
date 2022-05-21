@@ -65,9 +65,9 @@ evaluate_model <- function(d,
 
 #' @title plot_model
 #' @description Plots a manually constructed model.
-#' @import ggplot2
-#' @import tidyverse
 #' @importFrom magrittr %>%
+#' @importFrom dplyr filter
+#' @import ggplot2
 #' @export
 #'
 #' @param model_evaluation The output from the evaluate_model function.
@@ -85,16 +85,18 @@ evaluate_model <- function(d,
 #'
 #'
 plot_model <- function(model_evaluation,
-                       by_roi = FALSE,
+                       by_roi = TRUE,
                        ncol = NULL,
                        nrow = NULL,
                        scales = "free_y",
                        rois = NULL) {
   # init local variables for CRAN check
   event <- NULL
-  events <- NULL
   roi <- NULL
   y <- NULL
+
+  # set events
+  events  <- model_evaluation$rm$events
 
   # prepare af
   af <- list(models = list(model_evaluation$model),
@@ -109,7 +111,8 @@ plot_model <- function(model_evaluation,
 
     # filter
     if (!is.null(rois)) {
-      fit <- fit %>% filter(roi %in% rois)
+      fit <- fit %>% dplyr::filter(roi %in% rois)
+      fit$roi <- factor(fit$roi, levels = rois)
     }
 
     # visualization
@@ -241,9 +244,9 @@ run_model <- function(d,
 #' @title autohrf
 #' @description A function that automatically finds the parameters of model's
 #' that best match the underlying data.
+#' @importFrom lubridate day hour minute second seconds_to_period
 #' @import gtools
 #' @import stats
-#' @importFrom lubridate day hour minute second seconds_to_period
 #' @export
 #'
 #' @param d A dataframe with the signal data: roi, t and y. ROI is the name of

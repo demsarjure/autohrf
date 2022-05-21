@@ -91,6 +91,9 @@ model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
 em <- evaluate_model(d, model, tr = 2.5)
+plot_model(em, by_roi = TRUE,
+           rois = c("R_2_ROI", "L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"))
+
 plot_model(em)
 
 ggsave(paste0("plot_model.pdf"),
