@@ -81,8 +81,8 @@ autofit <- autohrf(df,
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.896, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.892, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.909, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.905, tolerance = tol)
 })
 
 # plot_best_models
