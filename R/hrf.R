@@ -29,12 +29,13 @@ create_spm_hrf <- function(tr,
 
 # A helper function for convolving HRF with a signal.
 convolve_hrf <- function(y, hrf_s) {
+  hrf_s <- as.matrix(hrf_s)
   pad <- length(hrf_s) + 20
   if (is.matrix(y)) {
     m  <- matrix(0, dim(y)[1] + 2 * pad, dim(y)[2])
     m[(pad + 1):(pad + dim(y)[1]), ] <- y
     hrf_f <- stats::filter(m, filter = hrf_s, method = "convolution", sides = 1)
-    hrf_s <- hrf_f[(pad + 1):(pad + dim(y)[1]), ]
+    hrf_s <- as.matrix(hrf_f[(pad + 1):(pad + dim(y)[1]), ])
     maxv <- apply(hrf_s, 2, FUN = function(x) max(abs(x)))
     hrf_s <- hrf_s /
       matrix(maxv, nrow = dim(hrf_s)[1], ncol = dim(hrf_s)[2], byrow = TRUE)

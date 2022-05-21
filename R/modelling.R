@@ -85,7 +85,7 @@ evaluate_model <- function(d,
 #'
 #'
 plot_model <- function(model_evaluation,
-                       by_roi = TRUE,
+                       by_roi = FALSE,
                        ncol = NULL,
                        nrow = NULL,
                        scales = "free_y",
@@ -125,8 +125,8 @@ plot_model <- function(model_evaluation,
                 aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
       ylab("y") +
       xlab("time") +
-      scale_fill_discrete(name = "event") +
-      scale_color_discrete(name = "event") +
+      scale_fill_brewer(type = "qual", palette = "Set1", name = "Event") +
+      scale_color_brewer(type = "qual", palette = "Set1", name = "Event") +
       facet_wrap(~ roi, scales = scales)
 
       if (is.null(ncol) && !is.null(nrow)) {
@@ -181,7 +181,7 @@ run_model <- function(d,
 
   # normalize
   ce$y[1:l, ] <- ce$y[1:l, ] /
-    matrix(apply(ce$y[1:l, ], 2, FUN = function(x) max(abs(x))),
+    matrix(apply(as.matrix(ce$y[1:l, ]), 2, FUN = function(x) max(abs(x))),
             nrow = l,
             ncol = n_events,
             byrow = TRUE)

@@ -14,9 +14,15 @@ set.seed(27)
 df <- swm
 
 # evaluate_model ---------------------------------------------------------------
+# 3 events
 model <- data.frame(event      = c("encoding", "delay", "response"),
                     start_time = c(0,           2.65,    12.5),
                     duration   = c(2.65,        9.85,    3))
+
+# single event
+model_single <- data.frame(event      = c("encoding"),
+                           start_time = c(0),
+                           duration   = c(3))
 
 # set some weights
 roi_weights <-
@@ -26,9 +32,15 @@ roi_weights <-
 em <- evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights)
 
 # evaluate_model
-test_that("plot_model", {
+test_that("evaluate_model", {
   expect_output(evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights))
 })
+
+# evaluate_model single event
+test_that("evaluate_model_single", {
+  expect_output(evaluate_model(df, model_single, tr = 2.5))
+})
+
 
 # plot_model
 test_that("plot_model", {
