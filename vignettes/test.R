@@ -1,32 +1,54 @@
 # this is a development test script
 library(ggplot2)
+
+# libs
+install_github("demsarjure/autohrf")
 library(autohrf)
 
-# Load d
+# Load data
 df <- swm
 
 # prepare data frames
+model1 <- data.frame(event = c("encoding", "delay", "response"),
+                     start_time = c(0, 2.5, 12.5),
+                     end_time = c(2.5, 12.5, 15))
+
+model2 <- data.frame(event = c("encoding", "delay", "response"),
+                     start_time = c(0, 3, 10),
+                     end_time = c(3, 10, 15))
+
 model3 <- data.frame(event = c("encoding", "delay", "response"),
-                     start_time = c(0, 2.65, 12.5),
-                     end_time = c(3, 12.5, 16))
+                     start_time = c(0, 5, 10),
+                     end_time = c(5, 10, 15))
 
-model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-                     start_time = c(0, 2.5, 2.65, 12.5),
-                     end_time = c(2.5, 3, 12.5, 15.5))
+# autohrf
+models <- list(model1, model2, model3)
+autofit1 <- autohrf(df, models, tr = 2.5, population = 10, iter = 5)
+p1 <- plot_fitness(autofit1)
+p1
+ggsave(paste0("plot_fitness1.pdf"),
+       width = 3840,
+       height = 1920,
+       dpi = 500,
+       units = "px")
 
-models <- list(model3, model4)
-
-# auto
-autofit <- autohrf(df, models, tr = 2.5, population = 50, iter = 50)
-
-plot_fitness(autofit)
+autofit <- autohrf(df, models, tr = 2.5, population = 100, iter = 100)
+p <- plot_fitness(autofit)
+p
+ggsave(paste0("plot_fitness.pdf"),
+       width = 3840,
+       height = 1920,
+       dpi = 500,
+       units = "px")
 
 plot_best_models(autofit)
 
+# extract models
 m <- get_best_models(autofit)
-m1 <- m[[1]] # Fitness: 0.9313374
-m2 <- m[[2]] # Fitness: 0.9379862
+m1 <- m[[1]]
+m2 <- m[[2]]
 
+# evaluate m1 manually
 em <- evaluate_model(d, m1, tr = 2.5, hrf = "spm")
 plot_model(em)
 plot_model(em, by_roi = TRUE)
@@ -34,7 +56,7 @@ plot_model(em, by_roi = TRUE)
 
 # manual
 d <- df
-model_specs <- models
+model_constraints <- models
 allow_overlap <- FALSE
 population <- 100
 iter <- 100
@@ -100,16 +122,3 @@ em <- evaluate_model(d, model, hrf = "spm")
 # plot fits
 plot_model(em)
 plot_model(em, by_roi = TRUE)
-
-# autohrf
-model3 <- data.frame(event = c("enconvolveding", "delay", "response"),
-                     start_time = c(0, 2.65, 12.5),
-                     end_time = c(3, 12.5, 16))
-model4 <- data.frame(event = c("fixation", "target", "delay", "response"),
-                     start_time = c(0, 2.5, 2.65, 12.5),
-                     end_time = c(2.5, 3, 12.5, 15.5))
-models <- list(model3, model4)
-autofit <- autohrf(df, models, population = 2, iter = 2)
-plot_fitness(autofit)
-plot_best_models(autofit)
-get_best_models(autofit)

@@ -7,31 +7,29 @@
 evaluate_model(
   d,
   model,
-  roi_weights = NULL,
   tr,
-  f = 100,
+  roi_weights = NULL,
   hrf = "spm",
   t = 32,
   p_boynton = c(2.25, 1.25, 2),
   p_spm = c(6, 16, 1, 1, 6, 0),
+  f = 100,
   report = TRUE
 )
 }
 \arguments{
-\item{d}{A data frame with the signal data: roi, t and x.
-ROI is the name of the region, t time stamps and x values of the signal.}
+\item{d}{A dataframe with the signal data: roi, t and y. ROI is the name of
+the region, t is the timestamp and y the value of the signal.}
 
 \item{model}{A data frame containing information about the model to use
 and its events (event, start_time and duration).}
+
+\item{tr}{MRI's repetition time.}
 
 \item{roi_weights}{A data frame with ROI weights: roi, weight. ROI is the
 name of the region, weight a number that defines the importance of that roi,
 the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 will be twice as important.}
-
-\item{tr}{MRI's repetition time.}
-
-\item{f}{Downsampling frequency.}
 
 \item{hrf}{Method to use for HRF generation, can be "boynton" or "spm".}
 
@@ -40,6 +38,8 @@ will be twice as important.}
 \item{p_boynton}{Parameters for the Boynton's HRF.}
 
 \item{p_spm}{Parameters for the SPM HRF.}
+
+\item{f}{Upsampling factor.}
 
 \item{report}{Whether to print a report of the evaluation results.}
 }

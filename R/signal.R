@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # A helper function for downsampling a given signal.
-downsample <- function(x, f = 100) {
+downsample <- function(y, f = 100) {
   # prepare the input data
-  x <- as.matrix(x)
-  l <- dim(x)[1]
+  y <- as.matrix(y)
+  l <- dim(y)[1]
   n <- ceiling(l / f)
-  m <- matrix(0, n, dim(x)[2])
+  m <- matrix(0, n, dim(y)[2])
 
   # iterate over the series
   for (i in 1:n) {
@@ -18,7 +18,7 @@ downsample <- function(x, f = 100) {
     if (end > l) end <- l
     middle <- round(start + f / 2)
     if (middle > l) middle <- l
-    m[i, ] <- x[middle, ]
+    m[i, ] <- y[middle, ]
   }
 
   # return the downsampled results

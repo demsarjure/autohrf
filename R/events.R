@@ -39,16 +39,15 @@ convolve_events <- function(model,
       t = t,
       p = p_boynton)
   }
-  x <- downsample(convolve_hrf(m, hrf_s), f)
+
+  # signal
+  y <- downsample(convolve_hrf(m, hrf_s), f)
 
   # time series
   ts <- downsample(convolve_hrf(ts, hrf_s), f)
 
-  # model
-  m <- downsample(m, f)
-
   # return results as a list
-  return(list(m = m, x = x, ts = ts))
+  return(list(y = y, ts = ts))
 }
 
 
@@ -63,12 +62,12 @@ plot_events <- function(af, i = NULL) {
   # prepare the data
   model <- af$models[[1]]
   ce <- af$best
-  len_ts <- dim(ce$x)[1]
+  len_ts <- dim(ce$y)[1]
   time_ts <- c(0:(len_ts - 1)) * af$tr
   d <- data.frame(y = ce$ts, x = time_ts, ts = "ts")
 
-  for (n in 1:dim(ce$x)[2]) {
-    d <- rbind(d, data.frame(y = ce$x[, n], x = time_ts, ts = model$event[n]))
+  for (n in 1:dim(ce$y)[2]) {
+    d <- rbind(d, data.frame(y = ce$y[, n], x = time_ts, ts = model$event[n]))
   }
   model$ts <- model$event
 

@@ -7,10 +7,10 @@ create_boynton_hrf <- function(tr,
                                t = 32,
                                p = c(2.25, 1.25, 2)) {
   # Boynton: p[1] = delta, p[2] = tau, p[3] = alpha
-  x <- c(0:(t / tr)) * tr
-  r <- (x - p[1]) / p[2]
+  y <- c(0:(t / tr)) * tr
+  r <- (y - p[1]) / p[2]
   h <- ((r ^ p[3]) * exp(-r))
-  h[x < p[1]] <- 0
+  h[y < p[1]] <- 0
   h <- h / ((p[3] ^ p[3]) * exp(-p[3]))
   return(h)
 }
@@ -28,24 +28,24 @@ create_spm_hrf <- function(tr,
 }
 
 # A helper function for convolving HRF with a signal.
-convolve_hrf <- function(x, hrf_s) {
+convolve_hrf <- function(y, hrf_s) {
   pad <- length(hrf_s) + 20
-  if (is.matrix(x)) {
-    m  <- matrix(0, dim(x)[1] + 2 * pad, dim(x)[2])
-    m[(pad + 1):(pad + dim(x)[1]), ] <- x
+  if (is.matrix(y)) {
+    m  <- matrix(0, dim(y)[1] + 2 * pad, dim(y)[2])
+    m[(pad + 1):(pad + dim(y)[1]), ] <- y
     hrf_f <- filter(m, filter = hrf_s, method = "convolution", sides = 1)
-    hrf_s <- hrf_f[(pad + 1):(pad + dim(x)[1]), ]
+    hrf_s <- hrf_f[(pad + 1):(pad + dim(y)[1]), ]
     maxv <- apply(hrf_s, 2, FUN = function(x) max(abs(x)))
     hrf_s <- hrf_s /
       matrix(maxv, nrow = dim(hrf_s)[1], ncol = dim(hrf_s)[2], byrow = TRUE)
   } else {
     hrf_s <- filter(c(c(1:pad) * 0,
-                    x,
+                    y,
                     c(1:pad) * 0),
                     filter = hrf_s,
                     method = "convolution",
                     sides = 1)
-    hrf_s <- hrf_s[(pad + 1):(pad + length(x))]
+    hrf_s <- hrf_s[(pad + 1):(pad + length(y))]
     hrf_s <- hrf_s / max(abs(hrf_s))
   }
   return(hrf_s)
