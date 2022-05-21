@@ -117,13 +117,13 @@ plot_model <- function(model_evaluation,
 
     # visualization
     p <- ggplot() +
-      geom_line(data = fit[fit$event == "y_m", ],
+      geom_line(data = fit[fit$event == "y", ],
                 aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
       geom_line(data = fit[fit$event %in% events, ],
                 aes(x = t, y = y, color = event, group = event)) +
-      geom_line(data = fit[fit$event == "y", ],
+      geom_line(data = fit[fit$event == "y_m", ],
                 aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
-      ylab("") +
+      ylab("y") +
       xlab("time") +
       scale_fill_discrete(name = "event") +
       scale_color_discrete(name = "event") +
