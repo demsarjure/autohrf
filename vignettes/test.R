@@ -2,6 +2,7 @@
 library(ggplot2)
 
 # libs
+library(devtools)
 install_github("demsarjure/autohrf")
 library(autohrf)
 
@@ -89,7 +90,8 @@ model <- data.frame(event      = "encoding",
                     duration   = 10)
 em <- evaluate_model(swm, model, tr = 2.5)
 plot_model(em)
-plot_model(em, by_roi=TRUE)
+plot_model(em, by_roi = TRUE,
+           rois = c("L_LO1_ROI", "R_PFt_ROI"))
 
 # manual evaluation
 model <- data.frame(event      = c("encoding", "delay", "response"),
@@ -128,5 +130,16 @@ model <- data.frame(event = c("encoding", "delay", "response"),
 em <- evaluate_model(d, model, hrf = "spm")
 
 # plot fits
-plot_model(em)
-plot_model(em, by_roi = TRUE)
+dataset <- "1A"
+dataset <- "1B"
+dataset <- "1C"
+
+d <- read.delim(sprintf("data/cluster_ts_%s.tsv", dataset))
+
+model2 <- data.frame(event        = c("onset", "block"),
+                     start_time   = c(      0,       0),
+                     end_time     = c(      2,      60),
+                     min_duration = c(    0.1,      55))
+
+model_constraints <- list(model2)
+autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)

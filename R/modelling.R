@@ -206,7 +206,7 @@ run_model <- function(d,
       m$coefficients["(Intercept)"][[1]]
 
     # calculate r2
-    r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "y_m"])
+    r2 <- 1 - var(m$residuals) / var(d[d$roi == roi, "y"])
 
     # calculate r2w
     r2w <- r2 * roi_weights[roi_weights$roi == roi, "weight"]
