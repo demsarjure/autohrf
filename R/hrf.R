@@ -33,13 +33,13 @@ convolve_hrf <- function(y, hrf_s) {
   if (is.matrix(y)) {
     m  <- matrix(0, dim(y)[1] + 2 * pad, dim(y)[2])
     m[(pad + 1):(pad + dim(y)[1]), ] <- y
-    hrf_f <- filter(m, filter = hrf_s, method = "convolution", sides = 1)
+    hrf_f <- stats::filter(m, filter = hrf_s, method = "convolution", sides = 1)
     hrf_s <- hrf_f[(pad + 1):(pad + dim(y)[1]), ]
     maxv <- apply(hrf_s, 2, FUN = function(x) max(abs(x)))
     hrf_s <- hrf_s /
       matrix(maxv, nrow = dim(hrf_s)[1], ncol = dim(hrf_s)[2], byrow = TRUE)
   } else {
-    hrf_s <- filter(c(c(1:pad) * 0,
+    hrf_s <- stats::filter(c(c(1:pad) * 0,
                     y,
                     c(1:pad) * 0),
                     filter = hrf_s,
