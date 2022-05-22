@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # A helper function for creating a Boynton HRF.
+#' @export
 create_boynton_hrf <- function(tr,
                                t = 32,
                                p = c(2.25, 1.25, 2)) {
@@ -16,6 +17,7 @@ create_boynton_hrf <- function(tr,
 }
 
 # A helper function for creating SPM HRF.
+#' @export
 create_spm_hrf <- function(tr,
                            t = 32,
                            p = c(6, 16, 1, 1, 6, 0)) {
@@ -28,6 +30,7 @@ create_spm_hrf <- function(tr,
 }
 
 # A helper function for convolving HRF with a signal.
+#' @export
 convolve_hrf <- function(y, hrf_s) {
   hrf_s <- as.matrix(hrf_s)
   pad <- length(hrf_s) + 20

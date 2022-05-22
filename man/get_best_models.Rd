@@ -31,7 +31,8 @@ model_constraints <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+autofit <- autohrf(df, model_constraints, tr = 2.5,
+                   population = 2, iter = 2, cores = 1)
 
 # print best models
 get_best_models(autofit)

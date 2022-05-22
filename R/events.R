@@ -4,6 +4,7 @@
 
 # A helper function for convolving events of a model with a generated HRF
 # signal.
+#' @export
 convolve_events <- function(model,
                             tr,
                             max_duration,
@@ -33,19 +34,19 @@ convolve_events <- function(model,
 
   # hrf
   if (hrf == "spm") {
-    hrf_s <- create_spm_hrf(tr = e_tr, t = t, p = p_spm)
+    hrf_s <- autohrf::create_spm_hrf(tr = e_tr, t = t, p = p_spm)
   } else {
-    hrf_s <- create_boynton_hrf(
+    hrf_s <- autohrf::create_boynton_hrf(
       tr = e_tr,
       t = t,
       p = p_boynton)
   }
 
   # signal
-  y <- downsample(convolve_hrf(m, hrf_s), f)
+  y <- autohrf::downsample(autohrf::convolve_hrf(m, hrf_s), f)
 
   # time series
-  ts <- downsample(convolve_hrf(ts, hrf_s), f)
+  ts <- autohrf::downsample(autohrf::convolve_hrf(ts, hrf_s), f)
 
   # return results as a list
   return(list(y = y, ts = ts))
@@ -53,6 +54,7 @@ convolve_events <- function(model,
 
 
 # A helper function for plotting events of a fitted model.
+#' @export
 plot_events <- function(af, i = NULL) {
   # init local variables for CRAN check
   start_time <- NULL

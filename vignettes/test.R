@@ -155,7 +155,9 @@ model3 <- data.frame(event        = c("onset", "block", "rest"),
                      min_duration = c(0.1,      50,      0.1))
 
 model_constraints <- list(model1, model2, model3)
-autofit <- autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
+library(autohrf)
+autofit <- autohrf(d, model_constraints, tr = 2.5, population = 5, iter = 20)
+
 plot_best_models(autofit)
 
 model2 <- data.frame(event        = "block",
