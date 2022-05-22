@@ -46,7 +46,7 @@ evaluate_model <- function(d,
                            f = 100,
                            report = TRUE) {
 
-  ce <- convolve_events(model, tr, f, hrf, t, p_boynton, p_spm)
+  ce <- convolve_events(model, tr, max(d$t), f, hrf, t, p_boynton, p_spm)
   rm <- run_model(d, ce, model, roi_weights)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr, coefficients = rm$c)
@@ -101,7 +101,7 @@ plot_model <- function(model_evaluation,
   # prepare af
   af <- list(models = list(model_evaluation$model),
              fitness = 0,
-             best = model_evaluation$ce,
+             ce = model_evaluation$ce,
              tr = model_evaluation$tr)
 
   # plot
@@ -245,6 +245,7 @@ run_model <- function(d,
 #' @description A function that automatically finds the parameters of model's
 #' that best match the underlying data.
 #' @importFrom lubridate day hour minute second seconds_to_period
+#' @import foreach
 #' @import gtools
 #' @import stats
 #' @export
@@ -312,49 +313,83 @@ autohrf <- function(d,
                     f = 100) {
 
   # parameters
-  pop <- population
-  m_rate <- mutation_rate
-  m_factor <- mutation_factor * pop
-  elitism <- ceiling(pop * elitism)
+  n_models <- length(model_constraints)
+  elitism <- ceiling(population * elitism)
 
-  # results
-  results <- list()
+  i <- 1
+  results <- foreach(i = 1:n_models) %do% {
+    fit_to_constraints(i,
+                       d,
+                       model_constraints,
+                       tr,
+                       roi_weights,
+                       allow_overlap,
+                       population,
+                       iter,
+                       mutation_rate,
+                       mutation_factor,
+                       elitism,
+                       hrf,
+                       t,
+                       p_boynton,
+                       p_spm,
+                       f)
+  }
+
+  return(results)
+}
+
+# a helper function for fitting to constraints
+fit_to_constraints <- function(model_id,
+                               d,
+                               model_constraints,
+                               tr,
+                               roi_weights,
+                               allow_overlap,
+                               population,
+                               iter,
+                               mutation_rate,
+                               mutation_factor,
+                               elitism,
+                               hrf,
+                               t,
+                               p_boynton,
+                               p_spm,
+                               f) {
 
   # iterate over all models
-  n_models <- length(model_constraints)
-  total_iterations <- n_models * iter
   execution_time <- Sys.time()
-  for (m in 1:n_models) {
-    # get model
-    current_model <- model_constraints[[m]]
-    n_events <- nrow(current_model)
 
-    # set min duration to default if not set
-    if (!"min_duration" %in% colnames(current_model)) {
-      current_model$min_duration <- rep(0.1, nrow(current_model))
-    }
+  # get model
+  current_model <- model_constraints[[model_id]]
+  n_events <- nrow(current_model)
 
-    # set max duration to default if not set
-    if (!"max_duration" %in% colnames(current_model)) {
-      current_model$max_duration <-
-        current_model$end_time - current_model$start_time
-    }
+  # set min duration to default if not set
+  if (!"min_duration" %in% colnames(current_model)) {
+    current_model$min_duration <- rep(0.1, nrow(current_model))
+  }
 
-    # create first generation
-    times <- create_first_generation(current_model,
-                                     n_events,
-                                     pop,
-                                     allow_overlap)
-    start_time <- times[[1]]
-    end_time <- times[[2]]
+  # set max duration to default if not set
+  if (!"max_duration" %in% colnames(current_model)) {
+    current_model$max_duration <-
+      current_model$end_time - current_model$start_time
+  }
 
-    # iterate over generations
-    max_fitness <- vector()
-    for (i in 1:iter) {
-      # calculate eta
-      current_iteration <- i + ((m - 1) * iter)
+  # create first generation
+  times <- create_first_generation(current_model,
+                                   n_events,
+                                   population,
+                                   allow_overlap)
+  start_time <- times[[1]]
+  end_time <- times[[2]]
+
+  # iterate over generations
+  max_fitness <- vector()
+  for (i in 1:iter) {
+    # calculate eta
+    if (model_id == 1) {
       seconds <- difftime(Sys.time(), execution_time, units = "secs")
-      eta <- round(seconds * (total_iterations - current_iteration + 1), 1)
+      eta <- round(seconds * (iter - i + 1), 1)
       eta <- seconds_to_period(eta)
       eta <- sprintf("%02d-%02d:%02d:%02d",
                       day(eta), hour(eta), minute(eta), round(second(eta)))
@@ -363,94 +398,94 @@ autohrf <- function(d,
       execution_time <- Sys.time()
 
       # print
-      cat("Progress:\t", current_iteration, "/",
-          total_iterations, "\teta:", eta, "\n")
-
-      # evaluate each model
-      fitness <- vector()
-      for (j in 1:pop) {
-        # create model from data
-        model <- data.frame(event = current_model$event,
-                            start_time = start_time[[j]],
-                            duration = end_time[[j]] - start_time[[j]])
-
-        em <- evaluate_model(d = d,
-                             model = model,
-                             roi_weights = roi_weights,
-                             tr = tr,
-                             f = f,
-                             hrf = hrf,
-                             t = t,
-                             p_boynton = p_boynton,
-                             p_spm = p_spm,
-                             report = FALSE)
-
-        fitness <- append(fitness, em$rm$r2$weighted)
-      }
-
-      # sort
-      start_time <- start_time[mixedorder(fitness, decreasing = TRUE)]
-      end_time <- end_time[mixedorder(fitness, decreasing = TRUE)]
-      fitness <- sort(fitness, decreasing = TRUE)
-      max_fitness <- append(max_fitness, max(fitness))
-
-      # create next gen (skip in last generation)
-      if (i != iter) {
-        times <- create_new_generation(elitism,
-                                       pop,
-                                       start_time,
-                                       end_time,
-                                       fitness,
-                                       n_events,
-                                       m_factor,
-                                       m_rate,
-                                       current_model,
-                                       allow_overlap)
-
-        start_time <- times[[1]]
-        end_time <- times[[2]]
-      }
+      cat("Progress:\t", i, "/",
+          iter, "\teta:", eta, "\n")
     }
 
-    # construct new models
-    new_models <- list()
-    for (j in 1:pop) {
+    # evaluate each model
+    fitness <- vector()
+    for (j in 1:population) {
       # create model from data
       model <- data.frame(event = current_model$event,
                           start_time = start_time[[j]],
                           duration = end_time[[j]] - start_time[[j]])
 
-      new_models[[j]] <- model
+      em <- evaluate_model(d = d,
+                           model = model,
+                           roi_weights = roi_weights,
+                           tr = tr,
+                           f = f,
+                           hrf = hrf,
+                           t = t,
+                           p_boynton = p_boynton,
+                           p_spm = p_spm,
+                           report = FALSE)
+
+      fitness <- append(fitness, em$rm$r2$weighted)
     }
 
-    #evaluate the best model
-    ce <- convolve_events(model = new_models[[1]],
-                          tr = tr,
-                          f = f,
-                          hrf = hrf,
-                          t = t,
-                          p_boynton = c(2.25, 1.25, 2),
-                          p_spm = c(6, 16, 1, 1, 6, 0))
+    # sort
+    start_time <- start_time[mixedorder(fitness, decreasing = TRUE)]
+    end_time <- end_time[mixedorder(fitness, decreasing = TRUE)]
+    fitness <- sort(fitness, decreasing = TRUE)
+    max_fitness <- append(max_fitness, max(fitness))
 
-    results[[m]] <- list(models = new_models,
-                         fitness = max_fitness,
-                         best = ce,
-                         tr = tr)
+    # create next gen (skip in last generation)
+    if (i != iter) {
+      times <- create_new_generation(elitism,
+                                     population,
+                                     start_time,
+                                     end_time,
+                                     fitness,
+                                     n_events,
+                                     mutation_factor,
+                                     mutation_rate,
+                                     current_model,
+                                     allow_overlap)
+
+      start_time <- times[[1]]
+      end_time <- times[[2]]
+    }
   }
 
-  return(results)
-}
+  # construct new models
+  new_models <- list()
+  for (j in 1:population) {
+    # create model from data
+    model <- data.frame(event = current_model$event,
+                        start_time = start_time[[j]],
+                        duration = end_time[[j]] - start_time[[j]])
 
+    new_models[[j]] <- model
+  }
+
+  # store convolved events
+  ce <- convolve_events(model = new_models[[1]],
+                        tr = tr,
+                        max_duration = max(d$t),
+                        f = f,
+                        hrf = hrf,
+                        t = t,
+                        p_boynton = c(2.25, 1.25, 2),
+                        p_spm = c(6, 16, 1, 1, 6, 0))
+
+  result <- list(models = new_models,
+                 fitness = max_fitness,
+                 ce = ce,
+                 tr = tr)
+
+  return(result)
+}
 
 # a helper function for creating the first generation
 create_first_generation <- function(current_model,
                                     n_events,
-                                    pop,
+                                    population,
                                     allow_overlap) {
 
   start_time <- list()
   end_time <- list()
-  for (i in 1:pop) {
+  for (i in 1:population) {
     # variables for start and end times
     starts <- NULL
     ends <- NULL
@@ -488,13 +523,13 @@ create_first_generation <- function(current_model,
 
 # a helper function for creating a new generation of possible solutions
 create_new_generation <- function(elitism,
-                                  pop,
+                                  population,
                                   start_time,
                                   end_time,
                                   fitness,
                                   n_events,
-                                  m_factor,
-                                  m_rate,
+                                  mutation_factor,
+                                  mutation_rate,
                                   current_model,
                                   allow_overlap) {
 
@@ -508,7 +543,7 @@ create_new_generation <- function(elitism,
   }
 
   # create new ones with genetic algorithms
-  for (j in (elitism + 1):pop) {
+  for (j in (elitism + 1):population) {
     # get parents
     parents <- get_parents(fitness)
     p1 <- parents[[1]]
@@ -518,8 +553,8 @@ create_new_generation <- function(elitism,
     child <- create_child(start_time,
                           end_time,
                           n_events,
-                          m_rate,
-                          m_factor,
+                          mutation_rate,
+                          mutation_factor,
                           current_model,
                           p1,
                           p2,
@@ -579,8 +614,8 @@ get_parents <- function(fitness) {
 create_child <- function(start_time,
                          end_time,
                          n_events,
-                         m_rate,
-                         m_factor,
+                         mutation_rate,
+                         mutation_factor,
                          current_model,
                          p1,
                          p2,
@@ -592,28 +627,34 @@ create_child <- function(start_time,
   end2 <- end_time[[p2]]
 
   # take half of p1
-  half1 <- round(n_events / 2)
+  half1 <- ceiling(n_events / 2)
   half2 <- n_events - half1
 
-  # take first half from p1 and second from p2
-  start <- append(start1[1:half1], start2[half1 + 1:half2])
-  end <- append(end1[1:half1], end2[half1 + 1:half2])
+  # only 1 event take start from one, end from the other
+  if (half2 == 0) {
+    start <- start1
+    end <- end2
+  } else {
+    # take first half from p1 and second from p2
+    start <- append(start1[1:half1], start2[half1 + 1:half2])
+    end <- append(end1[1:half1], end2[half1 + 1:half2])
+  }
 
   # mutations modify values
   for (k in 1:n_events) {
-  # add some random value (depends on m_factor)
+    # add some random value (depends on mutation_factor)
     duration <- end[k] - start[k]
-    mutation <- duration * m_factor
+    mutation <- duration * mutation_factor
 
     # start
     rand <- runif(1)
-    if (rand < m_rate) {
+    if (rand < mutation_rate) {
       start[k] <- start[k] + runif(1, -mutation, mutation)
     }
 
     # end
     rand <- runif(1)
-    if (rand < m_rate) {
+    if (rand < mutation_rate) {
       end[k] <- end[k] + runif(1, -mutation, mutation)
     }
 

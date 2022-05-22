@@ -38,11 +38,11 @@ test_that("convolve_events", {
                   start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
   # convolve
-  ce <- convolve_events(m, tr = 2.5)
+  ce <- convolve_events(m, tr = 2.5, max(df$t))
 
   # test
   expect_equal(mean(ce$y), 0.124, tolerance = tol)
-  expect_equal(mean(ce$ts), 0.291, tolerance = tol)
+  expect_equal(mean(ce$ts), 0.278, tolerance = tol)
 })
 
 # plot_events
