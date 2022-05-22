@@ -5,7 +5,7 @@
 library(autohrf)
 
 # set tolerance
-tol <- 0.01
+tol <- 0.05
 
 # set seed
 set.seed(27)
@@ -29,7 +29,8 @@ model_constraints <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+autofit <- autohrf(df, model_constraints, tr = 2.5,
+                   population = 2, iter = 2, cores = 1)
 
 # convolve_events
 test_that("convolve_events", {

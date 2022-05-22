@@ -46,7 +46,15 @@ evaluate_model <- function(d,
                            f = 100,
                            report = TRUE) {
 
-  ce <- convolve_events(model, tr, max(d$t), f, hrf, t, p_boynton, p_spm)
+  ce <- autohrf::convolve_events(model = model,
+                                 tr = tr,
+                                 max_duration = max(d$t),
+                                 f = f,
+                                 hrf = hrf,
+                                 t = t,
+                                 p_boynton = p_boynton,
+                                 p_spm = p_spm)
+
   rm <- run_model(d, ce, model, roi_weights)
 
   em <- list(model = model, rm = rm, ce = ce, tr = tr, coefficients = rm$c)
@@ -139,12 +147,13 @@ plot_model <- function(model_evaluation,
       # plot
       p
   } else {
-    plot_events(af)
+    autohrf::plot_events(af)
   }
 }
 
 
 # a helper function for evaluating a model
+#' @export
 run_model <- function(d,
                       ce,
                       model,
@@ -245,6 +254,7 @@ run_model <- function(d,
 #' @description A function that automatically finds the parameters of model's
 #' that best match the underlying data.
 #' @importFrom lubridate day hour minute second seconds_to_period
+#' @import doParallel
 #' @import foreach
 #' @import gtools
 #' @import stats
@@ -272,6 +282,8 @@ run_model <- function(d,
 #' @param p_boynton Parameters for the Boynton's HRF.
 #' @param p_spm Parameters for the SPM HRF.
 #' @param f Upsampling factor.
+#' @param cores Number of cores to use for parallel processing. Set to the
+#' number of provided model constraints by default.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -294,7 +306,8 @@ run_model <- function(d,
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5,
+#'                    population = 2, iter = 2, cores = 1)
 #'
 autohrf <- function(d,
                     model_constraints,
@@ -310,36 +323,54 @@ autohrf <- function(d,
                     t = 32,
                     p_boynton = c(2.25, 1.25, 2),
                     p_spm = c(6, 16, 1, 1, 6, 0),
-                    f = 100) {
+                    f = 100,
+                    cores = NULL) {
 
   # parameters
   n_models <- length(model_constraints)
   elitism <- ceiling(population * elitism)
 
+  # set cores to number of model constraints
+  if (is.null(cores)) {
+    cores <- n_models
+  }
+
+  # decrease cores if too large
+  if (cores > parallel::detectCores() - 1) {
+    cores <- parallel::detectCores() - 1
+  }
+
+  if (cores != 1) {
+    # setup parallelism
+    cl <- parallel::makeCluster(cores, outfile = "")
+    doParallel::registerDoParallel(cl)
+  }
+
   i <- 1
-  results <- foreach(i = 1:n_models) %do% {
-    fit_to_constraints(i,
-                       d,
-                       model_constraints,
-                       tr,
-                       roi_weights,
-                       allow_overlap,
-                       population,
-                       iter,
-                       mutation_rate,
-                       mutation_factor,
-                       elitism,
-                       hrf,
-                       t,
-                       p_boynton,
-                       p_spm,
-                       f)
+  results <- foreach(i = 1:n_models) %dopar% {
+    autohrf::fit_to_constraints(i,
+                                d,
+                                model_constraints,
+                                tr,
+                                roi_weights,
+                                allow_overlap,
+                                population,
+                                iter,
+                                mutation_rate,
+                                mutation_factor,
+                                elitism,
+                                hrf,
+                                t,
+                                p_boynton,
+                                p_spm,
+                                f)
   }
 
   return(results)
 }
 
 # a helper function for fitting to constraints
+#' @export
 fit_to_constraints <- function(model_id,
                                d,
                                model_constraints,
@@ -376,10 +407,10 @@ fit_to_constraints <- function(model_id,
   }
 
   # create first generation
-  times <- create_first_generation(current_model,
-                                   n_events,
-                                   population,
-                                   allow_overlap)
+  times <- autohrf::create_first_generation(current_model,
+                                            n_events,
+                                            population,
+                                            allow_overlap)
   start_time <- times[[1]]
   end_time <- times[[2]]
 
@@ -387,20 +418,20 @@ fit_to_constraints <- function(model_id,
   max_fitness <- vector()
   for (i in 1:iter) {
     # calculate eta
-    if (model_id == 1) {
-      seconds <- difftime(Sys.time(), execution_time, units = "secs")
-      eta <- round(seconds * (iter - i + 1), 1)
-      eta <- seconds_to_period(eta)
-      eta <- sprintf("%02d-%02d:%02d:%02d",
-                      day(eta), hour(eta), minute(eta), round(second(eta)))
+    seconds <- difftime(Sys.time(), execution_time, units = "secs")
+    eta <- round(seconds * (iter - i + 1), 1)
+    eta <- seconds_to_period(eta)
+    eta <- sprintf("%02d-%02d:%02d:%02d",
+                    day(eta), hour(eta), minute(eta), round(second(eta)))
 
-      # time of execution
-      execution_time <- Sys.time()
+    # time of execution
+    execution_time <- Sys.time()
 
-      # print
-      cat("Progress:\t", i, "/",
-          iter, "\teta:", eta, "\n")
-    }
+    # print
+    n_models <- length(model_constraints)
+    cat("Model:", model_id,
+        "Iteration: ", i, "/", iter,
+        "ETA:", eta, "\n")
 
     # evaluate each model
     fitness <- vector()
@@ -410,16 +441,16 @@ fit_to_constraints <- function(model_id,
                           start_time = start_time[[j]],
                           duration = end_time[[j]] - start_time[[j]])
 
-      em <- evaluate_model(d = d,
-                           model = model,
-                           roi_weights = roi_weights,
-                           tr = tr,
-                           f = f,
-                           hrf = hrf,
-                           t = t,
-                           p_boynton = p_boynton,
-                           p_spm = p_spm,
-                           report = FALSE)
+      em <- autohrf::evaluate_model(d = d,
+                                    model = model,
+                                    roi_weights = roi_weights,
+                                    tr = tr,
+                                    f = f,
+                                    hrf = hrf,
+                                    t = t,
+                                    p_boynton = p_boynton,
+                                    p_spm = p_spm,
+                                    report = FALSE)
 
       fitness <- append(fitness, em$rm$r2$weighted)
     }
@@ -432,16 +463,16 @@ fit_to_constraints <- function(model_id,
 
     # create next gen (skip in last generation)
     if (i != iter) {
-      times <- create_new_generation(elitism,
-                                     population,
-                                     start_time,
-                                     end_time,
-                                     fitness,
-                                     n_events,
-                                     mutation_factor,
-                                     mutation_rate,
-                                     current_model,
-                                     allow_overlap)
+      times <- autohrf::create_new_generation(elitism,
+                                              population,
+                                              start_time,
+                                              end_time,
+                                              fitness,
+                                              n_events,
+                                              mutation_factor,
+                                              mutation_rate,
+                                              current_model,
+                                              allow_overlap)
 
       start_time <- times[[1]]
       end_time <- times[[2]]
@@ -460,14 +491,14 @@ fit_to_constraints <- function(model_id,
   }
 
   # store convolved events
-  ce <- convolve_events(model = new_models[[1]],
-                        tr = tr,
-                        max_duration = max(d$t),
-                        f = f,
-                        hrf = hrf,
-                        t = t,
-                        p_boynton = c(2.25, 1.25, 2),
-                        p_spm = c(6, 16, 1, 1, 6, 0))
+  ce <- autohrf::convolve_events(model = new_models[[1]],
+                                 tr = tr,
+                                 max_duration = max(d$t),
+                                 f = f,
+                                 hrf = hrf,
+                                 t = t,
+                                 p_boynton = p_boynton,
+                                 p_spm = p_spm)
 
   result <- list(models = new_models,
                  fitness = max_fitness,
@@ -478,6 +509,7 @@ fit_to_constraints <- function(model_id,
 }
 
 # a helper function for creating the first generation
+#' @export
 create_first_generation <- function(current_model,
                                     n_events,
                                     population,
@@ -522,6 +554,7 @@ create_first_generation <- function(current_model,
 
 
 # a helper function for creating a new generation of possible solutions
+#' @export
 create_new_generation <- function(elitism,
                                   population,
                                   start_time,
@@ -545,20 +578,20 @@ create_new_generation <- function(elitism,
   # create new ones with genetic algorithms
   for (j in (elitism + 1):population) {
     # get parents
-    parents <- get_parents(fitness)
+    parents <- autohrf::get_parents(fitness)
     p1 <- parents[[1]]
     p2 <- parents[[2]]
 
     # create child
-    child <- create_child(start_time,
-                          end_time,
-                          n_events,
-                          mutation_rate,
-                          mutation_factor,
-                          current_model,
-                          p1,
-                          p2,
-                          allow_overlap)
+    child <- autohrf::create_child(start_time,
+                                   end_time,
+                                   n_events,
+                                   mutation_rate,
+                                   mutation_factor,
+                                   current_model,
+                                   p1,
+                                   p2,
+                                   allow_overlap)
 
     # store
     new_start[[j]] <- child[[1]]
@@ -574,6 +607,7 @@ create_new_generation <- function(elitism,
 }
 
 # a helper function for getting parents
+#' @export
 get_parents <- function(fitness) {
   sum_fitness <- sum(fitness)
 
@@ -611,6 +645,7 @@ get_parents <- function(fitness) {
 }
 
 # a helper function for creating a child from parents
+#' @export
 create_child <- function(start_time,
                          end_time,
                          n_events,
@@ -719,7 +754,8 @@ create_child <- function(start_time,
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5,
+#'                    population = 2, iter = 2, cores = 1)
 #'
 #' # plot fitness
 #' plot_fitness(autofit)
@@ -779,7 +815,8 @@ plot_fitness <- function(autofit) {
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5,
+#'                    population = 2, iter = 2, cores = 1)
 #'
 #' # plot best models
 #' plot_best_models(autofit)
@@ -791,7 +828,7 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 
   # iterate over models
   for (af in autofit) {
-    graphs[[i]] <- plot_events(af, i)
+    graphs[[i]] <- autohrf::plot_events(af, i)
     i <- i + 1
   }
 
@@ -831,7 +868,8 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #'
 #' # run autohrf
 #' df <- swm
-#' autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+#' autofit <- autohrf(df, model_constraints, tr = 2.5,
+#'                    population = 2, iter = 2, cores = 1)
 #'
 #' # print best models
 #' get_best_models(autofit)

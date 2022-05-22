@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # A helper function for downsampling a given signal.
+#' @export
 downsample <- function(y, f = 100) {
   # prepare the input data
   y <- as.matrix(y)

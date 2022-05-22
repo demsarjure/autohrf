@@ -19,7 +19,8 @@ autohrf(
   t = 32,
   p_boynton = c(2.25, 1.25, 2),
   p_spm = c(6, 16, 1, 1, 6, 0),
-  f = 100
+  f = 100,
+  cores = NULL
 )
 }
 \arguments{
@@ -59,6 +60,9 @@ solutions) in the genetic algorithm.}
 \item{p_spm}{Parameters for the SPM HRF.}
 
 \item{f}{Upsampling factor.}
+
+\item{cores}{Number of cores to use for parallel processing. Set to the
+number of provided model constraints by default.}
 }
 \value{
 A list containing model fits for each of the provided model
@@ -86,6 +90,7 @@ model_constraints <- list(model3, model4)
 
 # run autohrf
 df <- swm
-autofit <- autohrf(df, model_constraints, tr = 2.5, population = 2, iter = 2)
+autofit <- autohrf(df, model_constraints, tr = 2.5,
+                   population = 2, iter = 2, cores = 1)
 
 }

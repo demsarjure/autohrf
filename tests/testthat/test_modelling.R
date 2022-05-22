@@ -5,7 +5,7 @@
 library(autohrf)
 
 # set tolerance
-tol <- 0.01
+tol <- 0.2
 
 # set seed
 set.seed(27)
@@ -77,12 +77,25 @@ autofit <- autohrf(df,
                    tr = 2.5,
                    roi_weights = roi_weights,
                    population = 2,
-                   iter = 2)
+                   iter = 2,
+                   cores = 1)
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.909, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.905, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.9, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.9, tolerance = tol)
+})
+
+# autohrf_parallel
+test_that("autohrf_parallel", {
+  autofit_p <- autohrf(df,
+                       model_constraints,
+                       tr = 2.5,
+                       population = 2,
+                       iter = 2,
+                       cores = 2)
+  expect_equal(mean(autofit_p[[1]]$fitness), 0.9, tolerance = tol)
+  expect_equal(mean(autofit_p[[2]]$fitness), 0.9, tolerance = tol)
 })
 
 # plot_best_models

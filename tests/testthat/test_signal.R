@@ -5,7 +5,7 @@
 library(autohrf)
 
 # set tolerance
-tol <- 0.01
+tol <- 0.05
 
 # downsample
 test_that("downsample", {

@@ -5,7 +5,7 @@
 library(autohrf)
 
 # set tolerance
-tol <- 0.01
+tol <- 0.05
 
 # create_boynton_hrf
 test_that("create_boynton_hrf", {
