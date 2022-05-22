@@ -6,13 +6,14 @@
 # signal.
 convolve_events <- function(model,
                             tr,
+                            max_duration,
                             f = 100,
                             hrf = "spm",
                             t = 32,
                             p_boynton = c(2.25, 1.25, 2),
                             p_spm = c(6, 16, 1, 1, 6, 0)) {
 
-  len <- max(model$start_time) + max(model$duration) + 30
+  len <- max(model$start_time) + max(model$duration) + max_duration
   len <- ceiling(len / tr) * tr
   e_tr <- tr / f
   len_ts <- ceiling(len / e_tr)
@@ -61,7 +62,7 @@ plot_events <- function(af, i = NULL) {
 
   # prepare the data
   model <- af$models[[1]]
-  ce <- af$best
+  ce <- af$ce
   len_ts <- dim(ce$y)[1]
   time_ts <- c(0:(len_ts - 1)) * af$tr
   d <- data.frame(y = ce$ts, x = time_ts, ts = "ts")

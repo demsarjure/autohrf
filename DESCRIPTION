@@ -1,7 +1,7 @@
 Package: autohrf
 Type: Package
 Title: An R Package for Generating Data-Informed GLM Models in Task-Based fMRI Data Analysis
-Version: 0.5.4
+Version: 0.6.0
 Authors@R:
     c(person("Jure", "Demšar", , "jure.demsar@fri.uni-lj.si", c("cre", "aut")),
     person("Nina", "Purg", , "nina.purg@ff.uni-lj.si", c("aut")),
@@ -14,6 +14,7 @@ LazyData: true
 Imports:
     cowplot (>= 1.1.1),
     dplyr (>= 1.0.8),
+    foreach (>= 1.5.2),
     ggplot2 (>= 3.3.5),
     gtools (>= 3.9.2),
     lubridate (>= 1.8.0),

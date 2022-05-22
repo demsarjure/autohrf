@@ -54,22 +54,22 @@ em <- evaluate_model(d, m1, tr = 2.5, hrf = "spm")
 plot_model(em)
 plot_model(em, by_roi = TRUE)
 
-
 # manual
 d <- df
-model_constraints <- models
+roi_weights <- NULL
 allow_overlap <- FALSE
-population <- 100
-iter <- 100
+population <- 10
+iter <- 10
 mutation_rate <- 0.1
 mutation_factor <- 0.05
 elitism <- 0.1
 tr <- 2.5
-f <- 100
 hrf <- "spm"
 t <- 32
 p_boynton <- c(2.25, 1.25, 2)
 p_spm <- c(6, 16, 1, 1, 6, 0)
+f <- 100
+
 roi_weights <- data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
                           weight = c(5, 5, 5))
 
@@ -136,10 +136,41 @@ dataset <- "1C"
 
 d <- read.delim(sprintf("data/cluster_ts_%s.tsv", dataset))
 
+d$y <- d$mean
+d$t <- (d$frame - 1) * 2.5
+
+model1 <- data.frame(event        = c("onset", "block", "rest"),
+                     start_time   = c(0,        0,       60),
+                     end_time     = c(2,        60,      65),
+                     min_duration = c(0.1,      55,      0.1))
+
 model2 <- data.frame(event        = c("onset", "block"),
-                     start_time   = c(      0,       0),
-                     end_time     = c(      2,      60),
-                     min_duration = c(    0.1,      55))
+                     start_time   = c(0,       0),
+                     end_time     = c(2,       60),
+                     min_duration = c(0.1,     55))
+
+model3 <- data.frame(event        = c("onset", "block", "rest"),
+                     start_time   = c(0,        0,       55),
+                     end_time     = c(5,        60,      65),
+                     min_duration = c(0.1,      50,      0.1))
+
+model_constraints <- list(model1, model2, model3)
+autofit <- autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
+plot_best_models(autofit)
+
+model2 <- data.frame(event        = "block",
+                     start_time   = 0,
+                     end_time     = 60,
+                     min_duration = 10)
 
 model_constraints <- list(model2)
-autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
+autofit <- autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
+plot_best_models(autofit)
+
+model2 <- data.frame(event        = "block",
+                     start_time   = 0,
+                     end_time     = 60,
+                     min_duration = 55)
+model_constraints <- list(model2)
+autofit <- autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
+plot_best_models(autofit)
