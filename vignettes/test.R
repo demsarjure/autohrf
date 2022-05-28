@@ -22,8 +22,12 @@ model3 <- data.frame(event = c("encoding", "delay", "response"),
                      start_time = c(0, 5, 10),
                      end_time = c(5, 10, 15))
 
+model4 <- data.frame(event = c("encoding", "test", "delay", "response"),
+                     start_time = c(0, 2.5, 5, 10),
+                     end_time = c(2.5, 5, 10, 15))
+
 # autohrf
-models <- list(model1, model2, model3)
+models <- list(model1, model2, model3, model4)
 autofit1 <- autohrf(df, models, tr = 2.5, population = 10, iter = 5)
 p1 <- plot_fitness(autofit1)
 p1
@@ -42,15 +46,15 @@ ggsave(paste0("plot_fitness.pdf"),
        dpi = 500,
        units = "px")
 
-plot_best_models(autofit)
+plot_best_models(autofit1)
 
 # extract models
-m <- get_best_models(autofit)
+m <- get_best_models(autofit1)
 m1 <- m[[1]]
 m2 <- m[[2]]
 
 # evaluate m1 manually
-em <- evaluate_model(d, m1, tr = 2.5, hrf = "spm")
+em <- evaluate_model(df, m1, tr = 2.5, hrf = "spm")
 plot_model(em)
 plot_model(em, by_roi = TRUE)
 

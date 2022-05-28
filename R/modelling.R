@@ -333,11 +333,11 @@ autohrf <- function(d,
   # set cores to number of model constraints
   if (is.null(cores)) {
     cores <- n_models
-  }
 
-  # decrease cores if too large
-  if (cores > parallel::detectCores() - 1) {
-    cores <- parallel::detectCores() - 1
+    # decrease cores if too large
+    if (cores > parallel::detectCores() - 1) {
+      cores <- parallel::detectCores() - 1
+    }
   }
 
   if (cores != 1) {
