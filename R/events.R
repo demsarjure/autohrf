@@ -72,6 +72,10 @@ plot_events <- function(af, i = NULL) {
   for (n in 1:dim(ce$y)[2]) {
     d <- rbind(d, data.frame(y = ce$y[, n], x = time_ts, ts = model$event[n]))
   }
+
+  # convert events to factors
+  d$ts <- factor(d$ts, levels = c(model$event, "ts"))
+  model$event <- factor(model$event, levels = model$event)
   model$ts <- model$event
 
   # construct the plot
