@@ -467,6 +467,13 @@ fit_to_constraints <- function(model_id,
     end_time <- ah$end_time
     iter <- iter + ah$iter
     start_iter <- ah$iter + 1
+
+    # check if populations sizes are matcing
+    if (population != length(start_time)) {
+      cat(paste0("ERROR: population in the previous run, [", length(start_time),
+                "] does not match the population in the new run [",
+                population, "]!"))
+    }
   }
 
   # iterate over generations
