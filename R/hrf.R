@@ -2,8 +2,15 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# A helper function for creating a Boynton HRF.
+#' @title create_boynton_hrf
+#' @description A helper function for creating a Boynton HRF.
 #' @export
+#'
+#' @param tr MRI's repetition time.
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param p Parameters for the Boynton's HRF.
+#'
+#' @return Returns a Boynton HRF function.
 create_boynton_hrf <- function(tr,
                                t = 32,
                                p = c(2.25, 1.25, 2)) {
@@ -16,8 +23,15 @@ create_boynton_hrf <- function(tr,
   return(h)
 }
 
-# A helper function for creating SPM HRF.
+#' @title create_boynton_hrf
+#' @description A helper function for creating a SPM HRF.
 #' @export
+#'
+#' @param tr MRI's repetition time.
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param p Parameters for the SPM HRF.
+#'
+#' @return Returns a SPM HRF function.
 create_spm_hrf <- function(tr,
                            t = 32,
                            p = c(6, 16, 1, 1, 6, 0)) {
@@ -29,8 +43,13 @@ create_spm_hrf <- function(tr,
   return(h)
 }
 
-# A helper function for convolving HRF with a signal.
+#' @title convolve_hrf
+#' @description A helper function for convolving HRF with a signal.
 #' @export
+#'
+#' @param y The signal.
+#' @param hrf_s The HRF.
+#' @return Returns the convolution between HRF and the signal.
 convolve_hrf <- function(y, hrf_s) {
   hrf_s <- as.matrix(hrf_s)
   pad <- length(hrf_s) + 20

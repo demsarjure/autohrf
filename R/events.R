@@ -2,17 +2,30 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# A helper function for convolving events of a model with a generated HRF
-# signal.
+#' @title convolve_events
+#' @description A helper function for convolving events of a model with a
+#' generated HRF signal.
 #' @export
+#'
+#' @param model A data frame containing information about the model to use
+#' and its events (event, start_time and duration).
+#' @param tr MRI's repetition time.
+#' @param max_duration Maximum duration of the signal.
+#' @param hrf Method to use for HRF generation, can be "boynton" or "spm".
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
+#' @param f Upsampling factor.
+#'
+#' @return Returns a list with the convolved signal and time series.
 convolve_events <- function(model,
                             tr,
                             max_duration,
-                            f = 100,
                             hrf = "spm",
                             t = 32,
                             p_boynton = c(2.25, 1.25, 2),
-                            p_spm = c(6, 16, 1, 1, 6, 0)) {
+                            p_spm = c(6, 16, 1, 1, 6, 0),
+                            f = 100) {
 
   len <- max(model$start_time) + max(model$duration) + max_duration
   len <- ceiling(len / tr) * tr
@@ -53,8 +66,14 @@ convolve_events <- function(model,
 }
 
 
-# A helper function for plotting events of a fitted model.
+#' @title plot_events
+#' @description A helper function for plotting events of a fitted model.
 #' @export
+#'
+#' @param af The output from the autohrf function.
+#' @param i Model index.
+#'
+#' @return Returns a plot of the events.
 plot_events <- function(af, i = NULL) {
   # init local variables for CRAN check
   start_time <- NULL

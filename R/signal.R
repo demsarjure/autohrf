@@ -2,8 +2,13 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# A helper function for downsampling a given signal.
+#' @title downsample
+#' @description A helper function for downsampling a given signal.
 #' @export
+#'
+#' @param y The signal.
+#' @param f Upsampling factor.
+#' @return Returns the downsampled signal.
 downsample <- function(y, f = 100) {
   # prepare the input data
   y <- as.matrix(y)
