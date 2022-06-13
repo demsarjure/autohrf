@@ -49,11 +49,11 @@ evaluate_model <- function(d,
   ce <- autohrf::convolve_events(model = model,
                                  tr = tr,
                                  max_duration = max(d$t),
-                                 f = f,
                                  hrf = hrf,
                                  t = t,
                                  p_boynton = p_boynton,
-                                 p_spm = p_spm)
+                                 p_spm = p_spm,
+                                 f = f)
 
   rm <- run_model(d, ce, model, roi_weights)
 
@@ -152,8 +152,21 @@ plot_model <- function(model_evaluation,
 }
 
 
-# a helper function for evaluating a model
+#' @title run_model
+#' @description A helper function for evaluating a model.
 #' @export
+#'
+#' @param d A dataframe with the signal data: roi, t and y. ROI is the name of
+#' the region, t is the timestamp and y the value of the signal.
+#' @param ce Result of the convolve_events function.
+#' @param model A data frame containing information about the model to use
+#' and its events (event, start_time and duration).
+#' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
+#' name of the region, weight a number that defines the importance of that roi,
+#' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+#' will be twice as important.
+#'
+#' @return Returns the model's evaluation.
 run_model <- function(d,
                       ce,
                       model,
@@ -271,8 +284,8 @@ run_model <- function(d,
 #' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
 #' will be twice as important.
 #' @param allow_overlap Whether to allow overlap between events.
-#' @param iter Number of iterations in the genetic algorithm.
 #' @param population The size of the population in the genetic algorithm.
+#' @param iter Number of iterations in the genetic algorithm.
 #' @param mutation_rate The mutation rate in the genetic algorithm.
 #' @param mutation_factor The mutation factor in the genetic algorithm.
 #' @param elitism The degree of elitism (promote a percentage of the best
@@ -284,6 +297,7 @@ run_model <- function(d,
 #' @param f Upsampling factor.
 #' @param cores Number of cores to use for parallel processing. Set to the
 #' number of provided model constraints by default.
+#' @param autohrf Results of a previous autohrf run to continue.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -324,7 +338,8 @@ autohrf <- function(d,
                     p_boynton = c(2.25, 1.25, 2),
                     p_spm = c(6, 16, 1, 1, 6, 0),
                     f = 100,
-                    cores = NULL) {
+                    cores = NULL,
+                    autohrf = NULL) {
 
   # parameters
   n_models <- length(model_constraints)
@@ -363,14 +378,44 @@ autohrf <- function(d,
                                 t,
                                 p_boynton,
                                 p_spm,
-                                f)
+                                f,
+                                autohrf)
   }
 
   return(results)
 }
 
-# a helper function for fitting to constraints
+
+#' @title fit_to_constraints
+#' @description A helper function for fitting a model to constraints.
 #' @export
+#'
+#' @param model_id ID of the model.
+#' @param d A dataframe with the signal data: roi, t and y. ROI is the name of
+#' the region, t is the timestamp and y the value of the signal.
+#' @param model_constraints A list of model specifications to use for fitting.
+#' Each specification is represented as a data frame containing information
+#' about it (event, start_time, end_time, min_duration and max_duration).
+#' @param tr MRI's repetition time.
+#' @param roi_weights A data frame with ROI weights: roi, weight. ROI is the
+#' name of the region, weight a number that defines the importance of that roi,
+#' the default weight for a ROI is 1. If set to 2 for a particular ROI that ROI
+#' will be twice as important.
+#' @param allow_overlap Whether to allow overlap between events.
+#' @param population The size of the population in the genetic algorithm.
+#' @param iter Number of iterations in the genetic algorithm.
+#' @param mutation_rate The mutation rate in the genetic algorithm.
+#' @param mutation_factor The mutation factor in the genetic algorithm.
+#' @param elitism The degree of elitism (promote a percentage of the best
+#' solutions) in the genetic algorithm.
+#' @param hrf Method to use for HRF generation.
+#' @param t The t parameter for Boynton or SPM HRF generation.
+#' @param p_boynton Parameters for the Boynton's HRF.
+#' @param p_spm Parameters for the SPM HRF.
+#' @param f Upsampling factor.
+#' @param autohrf Results of a previous autohrf run to continue.
+#'
+#' @return Returns the best model given provided constraints.
 fit_to_constraints <- function(model_id,
                                d,
                                model_constraints,
@@ -386,7 +431,8 @@ fit_to_constraints <- function(model_id,
                                t,
                                p_boynton,
                                p_spm,
-                               f) {
+                               f,
+                               autohrf = NULL) {
 
   # iterate over all models
   execution_time <- Sys.time()
@@ -406,17 +452,33 @@ fit_to_constraints <- function(model_id,
       current_model$end_time - current_model$start_time
   }
 
-  # create first generation
-  times <- autohrf::create_first_generation(current_model,
-                                            n_events,
-                                            population,
-                                            allow_overlap)
-  start_time <- times[[1]]
-  end_time <- times[[2]]
+  # create first generation if not continuing
+  if (is.null(autohrf)) {
+    times <- autohrf::create_first_generation(current_model,
+                                              n_events,
+                                              population,
+                                              allow_overlap)
+    start_time <- times[[1]]
+    end_time <- times[[2]]
+    start_iter <- 1
+  } else {
+    ah <- autohrf[[model_id]]
+    start_time <- ah$start_time
+    end_time <- ah$end_time
+    iter <- iter + ah$iter
+    start_iter <- ah$iter + 1
+
+    # check if populations sizes are matcing
+    if (population != length(start_time)) {
+      cat(paste0("ERROR: population in the previous run, [", length(start_time),
+                "] does not match the population in the new run [",
+                population, "]!"))
+    }
+  }
 
   # iterate over generations
   max_fitness <- vector()
-  for (i in 1:iter) {
+  for (i in start_iter:iter) {
     # calculate eta
     seconds <- difftime(Sys.time(), execution_time, units = "secs")
     eta <- round(seconds * (iter - i + 1), 1)
@@ -494,22 +556,34 @@ fit_to_constraints <- function(model_id,
   ce <- autohrf::convolve_events(model = new_models[[1]],
                                  tr = tr,
                                  max_duration = max(d$t),
-                                 f = f,
                                  hrf = hrf,
                                  t = t,
                                  p_boynton = p_boynton,
-                                 p_spm = p_spm)
+                                 p_spm = p_spm,
+                                 f = f)
 
   result <- list(models = new_models,
                  fitness = max_fitness,
                  ce = ce,
-                 tr = tr)
+                 tr = tr,
+                 start_time = start_time,
+                 end_time = end_time,
+                 iter = iter)
 
   return(result)
 }
 
-# a helper function for creating the first generation
+
+#' @title create_first_generation
+#' @description A helper function for creating the first generation.
 #' @export
+#'
+#' @param current_model The constraints of the current model.
+#' @param n_events Number of events in the model.
+#' @param population The size of the population in the genetic algorithm.
+#' @param allow_overlap Whether to allow overlap between events.
+#'
+#' @return Returns the first generation of models.
 create_first_generation <- function(current_model,
                                     n_events,
                                     population,
@@ -553,8 +627,29 @@ create_first_generation <- function(current_model,
 }
 
 
-# a helper function for creating a new generation of possible solutions
+#' @title create_new_generation
+#' @description Aa helper function for creating a new generation of possible
+#' solutions.
+#' @importFrom lubridate day hour minute second seconds_to_period
+#' @import doParallel
+#' @import foreach
+#' @import gtools
+#' @import stats
 #' @export
+#'
+#' @param elitism The degree of elitism (promote a percentage of the best
+#' solutions) in the genetic algorithm.
+#' @param population The size of the population in the genetic algorithm.
+#' @param start_time A list with model's event start times.
+#' @param end_time A list with model's event end times.
+#' @param fitness A fitness score of all candidate models.
+#' @param n_events Number of events in the model.
+#' @param mutation_factor The mutation factor in the genetic algorithm.
+#' @param mutation_rate The mutation rate in the genetic algorithm.
+#' @param current_model The constraints of the current model.
+#' @param allow_overlap Whether to allow overlap between events.
+#'
+#' @return A new generation of candidate models.
 create_new_generation <- function(elitism,
                                   population,
                                   start_time,
@@ -606,8 +701,14 @@ create_new_generation <- function(elitism,
   return(times)
 }
 
-# a helper function for getting parents
+
+#' @title get_parents
+#' @description A helper function for getting parents for the child model.
 #' @export
+#'
+#' @param fitness A fitness score of all candidate models.
+#'
+#' @return Parents for the child model.
 get_parents <- function(fitness) {
   sum_fitness <- sum(fitness)
 
@@ -644,8 +745,22 @@ get_parents <- function(fitness) {
   return(parents)
 }
 
-# a helper function for creating a child from parents
+
+#' @title create_child
+#' @description A helper function for creating a child from parents.
 #' @export
+#'
+#' @param start_time A list with model's event start times.
+#' @param end_time A list with model's event end times.
+#' @param n_events Number of events in the model.
+#' @param mutation_rate The mutation rate in the genetic algorithm.
+#' @param mutation_factor The mutation factor in the genetic algorithm.
+#' @param current_model The constraints of the current model.
+#' @param p1 The first selected parent.
+#' @param p2 The second selected parent.
+#' @param allow_overlap Whether to allow overlap between events.
+#'
+#' @return A child model created from two parents.
 create_child <- function(start_time,
                          end_time,
                          n_events,
