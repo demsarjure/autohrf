@@ -74,8 +74,9 @@ evaluate_model <- function(d,
 #' @title plot_model
 #' @description Plots a manually constructed model.
 #' @importFrom magrittr %>%
-#' @importFrom dplyr filter
+#' @importFrom dplyr case_when filter mutate
 #' @import ggplot2
+#' @import RColorBrewer
 #' @export
 #'
 #' @param model_evaluation The output from the evaluate_model function.
@@ -102,6 +103,7 @@ plot_model <- function(model_evaluation,
   event <- NULL
   roi <- NULL
   y <- NULL
+  signal <- NULL
 
   # set events
   events  <- model_evaluation$rm$events
@@ -124,17 +126,22 @@ plot_model <- function(model_evaluation,
     }
 
     # visualization
+    event_data <- fit[fit$event %in% events, ]
+    signal_data <- fit[!(fit$event %in% events), ]
+    signal_data <- signal_data %>%
+        mutate(signal = case_when(event == "y" ~ "bold", TRUE ~ "model"))
+    legend_order <- c("bold", "model", events)
+    my_palette <- c("#000000", "#FF0000", brewer.pal(length(events), "Set1"))
     p <- ggplot() +
-      geom_line(data = fit[fit$event == "y", ],
-                aes(x = t, y = y), color = "black", size = 1, alpha = 0.5) +
-      geom_line(data = fit[fit$event %in% events, ],
+      geom_line(data = signal_data,
+                aes(x = t, y = y, color = signal, group = signal), size = 1) +
+      geom_line(data = event_data,
                 aes(x = t, y = y, color = event, group = event)) +
-      geom_line(data = fit[fit$event == "y_m", ],
-                aes(x = t, y = y), color = "red", size = 1, alpha = 0.3) +
       ylab("y") +
       xlab("time") +
-      scale_fill_brewer(type = "qual", palette = "Set1", name = "Event") +
-      scale_color_brewer(type = "qual", palette = "Set1", name = "Event") +
+      scale_fill_manual(values = my_palette, breaks = legend_order) +
+      scale_color_manual(values = my_palette, breaks = legend_order) +
+      theme(legend.title = element_blank()) +
       facet_wrap(~ roi, scales = scales)
 
       if (is.null(ncol) && !is.null(nrow)) {
@@ -202,8 +209,8 @@ run_model <- function(d,
   l <- dim(d[d$roi == rois[1], ])[1]
 
   # normalize
-  ce$y[1:l, ] <- ce$y[1:l, ] /
-    matrix(apply(as.matrix(ce$y[1:l, ]), 2, FUN = function(x) max(abs(x))),
+  ce[1:l, ] <- ce[1:l, ] /
+    matrix(apply(as.matrix(ce[1:l, ]), 2, FUN = function(x) max(abs(x))),
             nrow = l,
             ncol = n_events,
             byrow = TRUE)
@@ -211,11 +218,11 @@ run_model <- function(d,
   # run through rois
   for (roi in rois) {
     # compute the linear model
-    d[d$roi == roi, events] <- ce$y[1:l, ]
+    d[d$roi == roi, events] <- ce[1:l, ]
     m <- lm(formula(d[, c("y", events)]), d[d$roi == roi, ])
 
     # save component timeseries
-    d[d$roi == roi, events] <- ce$y[1:l, ] *
+    d[d$roi == roi, events] <- ce[1:l, ] *
                                matrix(m$coefficients[events],
                                       l, length(model$event), byrow = TRUE)
     d[d$roi == roi, "(Intercept)"] <- m$coefficients["(Intercept)"][[1]]
@@ -223,7 +230,7 @@ run_model <- function(d,
       apply(as.matrix(d[d$roi == roi, c("(Intercept)", events)]), 1, FUN = sum)
     d[d$roi == roi, "r"] <- m$residuals
     d[d$roi == roi, events] <-
-      ce$y[1:l, ] *
+      ce[1:l, ] *
       matrix(m$coefficients[events], l, length(model$event), byrow = TRUE) +
       m$coefficients["(Intercept)"][[1]]
 
@@ -491,8 +498,8 @@ fit_to_constraints <- function(model_id,
 
     # print
     n_models <- length(model_constraints)
-    cat("Model:", model_id,
-        "Iteration: ", i, "/", iter,
+    cat("Model:", model_id, "\t|\t",
+        "Iteration:", i, "/", iter, "\t|\t",
         "ETA:", eta, "\n")
 
     # evaluate each model

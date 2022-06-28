@@ -62,7 +62,7 @@ convolve_events <- function(model,
   ts <- autohrf::downsample(autohrf::convolve_hrf(ts, hrf_s), f)
 
   # return results as a list
-  return(list(y = y, ts = ts))
+  return(y)
 }
 
 
@@ -84,12 +84,13 @@ plot_events <- function(af, i = NULL) {
   # prepare the data
   model <- af$models[[1]]
   ce <- af$ce
-  len_ts <- dim(ce$y)[1]
+  ts <- rowSums(ce)
+  len_ts <- dim(ce)[1]
   time_ts <- c(0:(len_ts - 1)) * af$tr
-  d <- data.frame(y = ce$ts, x = time_ts, ts = "ts")
+  d <- data.frame(y = ts, x = time_ts, ts = "ts")
 
-  for (n in 1:dim(ce$y)[2]) {
-    d <- rbind(d, data.frame(y = ce$y[, n], x = time_ts, ts = model$event[n]))
+  for (n in 1:dim(ce)[2]) {
+    d <- rbind(d, data.frame(y = ce[, n], x = time_ts, ts = model$event[n]))
   }
 
   # convert events to factors

@@ -20,7 +20,8 @@ autohrf(
   p_boynton = c(2.25, 1.25, 2),
   p_spm = c(6, 16, 1, 1, 6, 0),
   f = 100,
-  cores = NULL
+  cores = NULL,
+  autohrf = NULL
 )
 }
 \arguments{
@@ -63,6 +64,8 @@ solutions) in the genetic algorithm.}
 
 \item{cores}{Number of cores to use for parallel processing. Set to the
 number of provided model constraints by default.}
+
+\item{autohrf}{Results of a previous autohrf run to continue.}
 }
 \value{
 A list containing model fits for each of the provided model

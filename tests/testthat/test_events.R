@@ -42,8 +42,7 @@ test_that("convolve_events", {
   ce <- convolve_events(m, tr = 2.5, max(df$t))
 
   # test
-  expect_equal(mean(ce$y), 0.124, tolerance = tol)
-  expect_equal(mean(ce$ts), 0.278, tolerance = tol)
+  expect_equal(mean(ce), 0.124, tolerance = tol)
 })
 
 # plot_events
