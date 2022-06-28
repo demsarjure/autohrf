@@ -20,7 +20,8 @@ fit_to_constraints(
   t,
   p_boynton,
   p_spm,
-  f
+  f,
+  autohrf = NULL
 )
 }
 \arguments{
@@ -62,6 +63,8 @@ solutions) in the genetic algorithm.}
 \item{p_spm}{Parameters for the SPM HRF.}
 
 \item{f}{Upsampling factor.}
+
+\item{autohrf}{Results of a previous autohrf run to continue.}
 }
 \value{
 Returns the best model given provided constraints.

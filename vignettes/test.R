@@ -6,7 +6,23 @@ library(devtools)
 install_github("demsarjure/autohrf")
 library(autohrf)
 
-# Load data
+# load existing results
+autofit <- readRDS("./vignettes/autofit.rds")
+load("./data/swm.rda")
+df <- swm
+
+# plot
+plot_fitness(autofit) + ylim(0, 1)
+plot_best_models(autofit)
+
+# get models
+m <- get_best_models(autofit)
+m1 <- m[[1]]
+em <- evaluate_model(df, m1, tr = 2.5, hrf = "spm")
+plot_model(em)
+plot_model(em, by_roi = TRUE)
+
+# load data
 df <- swm
 
 # prepare data frames
@@ -180,3 +196,10 @@ model2 <- data.frame(event        = "block",
 model_constraints <- list(model2)
 autofit <- autohrf(d, model_constraints, tr = 2.5, population = 10, iter = 10)
 plot_best_models(autofit)
+
+model_s <- data.frame(event        = c("onset"),
+                      start_time   = c(0),
+                      end_time     = c(30))
+model_constraints <- list(model_s)
+autofit <- autohrf(df, model_constraints, tr = 2.5, population = 5, iter = 20)
+plot_fitness(autofit)
