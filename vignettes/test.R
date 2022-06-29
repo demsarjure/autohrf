@@ -12,11 +12,16 @@ load("./data/swm.rda")
 df <- swm
 
 # plot
-plot_fitness(autofit) + ylim(0, 1)
+plot_fitness(autofit)
+autofit[[1]]$ce <- autofit[[1]]$ce$y
+autofit[[2]]$ce <- autofit[[2]]$ce$y
+autofit[[3]]$ce <- autofit[[3]]$ce$y
 plot_best_models(autofit)
 
 # get models
 m <- get_best_models(autofit)
+m <- get_best_models(autofit, return_fitness = TRUE)
+
 m1 <- m[[1]]
 em <- evaluate_model(df, m1, tr = 2.5, hrf = "spm")
 plot_model(em)
@@ -62,10 +67,10 @@ ggsave(paste0("plot_fitness.pdf"),
        dpi = 500,
        units = "px")
 
-plot_best_models(autofit1)
+plot_best_models(autofit)
 
 # extract models
-m <- get_best_models(autofit1)
+m <- get_best_models(autofit)
 m1 <- m[[1]]
 m2 <- m[[2]]
 
