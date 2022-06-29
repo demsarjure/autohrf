@@ -131,7 +131,7 @@ plot_model <- function(model_evaluation,
     signal_data <- signal_data %>%
         mutate(signal = case_when(event == "y" ~ "bold", TRUE ~ "model"))
     legend_order <- c("bold", "model", events)
-    my_palette <- c("#000000", "#FF6869", brewer.pal(length(events), "Set1"))
+    my_palette <- c("#000000", "#FF7E79", brewer.pal(length(events), "Set1"))
     p <- ggplot() +
       geom_line(data = signal_data,
                 aes(x = t, y = y, color = signal, group = signal), size = 1) +
