@@ -131,7 +131,7 @@ plot_model <- function(model_evaluation,
     signal_data <- signal_data %>%
         mutate(signal = case_when(event == "y" ~ "bold", TRUE ~ "model"))
     legend_order <- c("bold", "model", events)
-    my_palette <- c("#000000", "#FF0000", brewer.pal(length(events), "Set1"))
+    my_palette <- c("#000000", "#FF6869", brewer.pal(length(events), "Set1"))
     p <- ggplot() +
       geom_line(data = signal_data,
                 aes(x = t, y = y, color = signal, group = signal), size = 1) +
@@ -971,6 +971,7 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #' @export
 #'
 #' @param autofit Output of the autohrf function.
+#' @param return_fitness Whether to return models or fitness.
 #'
 #' @examples
 #' # prepare model specs
@@ -996,9 +997,10 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #' # print best models
 #' get_best_models(autofit)
 #'
-get_best_models <- function(autofit) {
+get_best_models <- function(autofit, return_fitness = FALSE) {
   # best models storage
   models <- list()
+  fitness <- vector()
 
   # iterate over models
   i <- 1
@@ -1007,10 +1009,15 @@ get_best_models <- function(autofit) {
     cat("\nModel", i, "\n\n")
     models[[i]] <- af$models[[1]]
     cat("Fitness: ", tail(af$fitness, 1), "\n\n")
+    fitness <- c(fitness, tail(af$fitness, 1))
     print(af$models[[1]])
     cat("\n----------------------------------------\n")
 
     i <- i + 1
+  }
+
+  if (return_fitness) {
+    return(fitness)
   }
 
   return(models)

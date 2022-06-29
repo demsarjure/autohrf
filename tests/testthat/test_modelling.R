@@ -104,7 +104,8 @@ test_that("plot_best_models", {
   vdiffr::expect_doppelganger("plot_best_models output", plot)
 })
 
-# get_best_models
-test_that("get_best_models", {
-  expect_output(get_best_models(autofit))
+
+# get_best_models_return_fitness
+test_that("get_best_models_return_fitness", {
+  expect_output(get_best_models(autofit, return_fitness = TRUE))
 })
