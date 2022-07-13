@@ -11,7 +11,7 @@
 #' University of Ljubljana, Slovenia.
 #'
 #' @name autohrf-datasets
-#' @aliases swm
+#' @aliases swm swm_autofit
 #'
 #' @format
 #' \describe{
@@ -27,10 +27,20 @@
 #' \item \code{y} BOLD value.
 #' }
 #' }
+#'
+#' \item{\code{swm_autofit}}{
+#' Stored results from a complete autohrf run.
+#'
+#' Source: Internal MBLab repository.
+#' }
+#'
 #' }
 #'
 #' @examples
 #' # load swm data
 #' data_swm <- swm
+#'
+#' # load the previously completed autofit
+#' autofit <- swm_autofit
 #'
 NULL

@@ -45,13 +45,13 @@ test_that("evaluate_model_single", {
 # plot_model
 test_that("plot_model", {
   plot <- plot_model(em)
-  vdiffr::expect_doppelganger("plot_model output", plot)
+  expect_equal(length(plot), 9)
 })
 
 # plot_model by roi
 test_that("plot_model_by_roi", {
   plot <- plot_model(em, by_roi = TRUE)
-  vdiffr::expect_doppelganger("plot_model_by_roi output", plot)
+  expect_equal(length(plot), 9)
 })
 
 # autohrf ----------------------------------------------------------------------
@@ -101,9 +101,8 @@ test_that("autohrf_parallel", {
 # plot_best_models
 test_that("plot_best_models", {
   plot <- plot_best_models(autofit)
-  vdiffr::expect_doppelganger("plot_best_models output", plot)
+  expect_equal(length(plot), 9)
 })
-
 
 # get_best_models_return_fitness
 test_that("get_best_models_return_fitness", {

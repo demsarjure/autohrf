@@ -144,6 +144,11 @@ plot_model <- function(model_evaluation,
       theme(legend.title = element_blank()) +
       facet_wrap(~ roi, scales = scales)
 
+      if (!is.null(ncol) && !is.null(nrow)) {
+        cat("\nWARNING: Both ncol and nrow are provided, using only ncol!\n")
+        nrow <- NULL
+      }
+
       if (is.null(ncol) && !is.null(nrow)) {
         p <- p + facet_wrap(~ roi, nrow = nrow, scales = scales)
       } else if (!is.null(ncol) && is.null(nrow)) {
@@ -446,11 +451,36 @@ fit_to_constraints <- function(model_id,
 
   # get model
   current_model <- model_constraints[[model_id]]
+
+  # get number of events
   n_events <- nrow(current_model)
+
+  # some basic checks
+  if (!"event" %in% colnames(current_model)) {
+    cat("\nERROR: Missing event column in one of provided model constraints!")
+  }
+  if (!"start_time" %in% colnames(current_model)) {
+    cat("\nERROR: Missing start_time column in one of provided model
+         constraints!")
+  }
+  if (!"end_time" %in% colnames(current_model)) {
+    cat("\nERROR: Missing end_time column in one of provided model
+        constraints!")
+  }
+  for (j in 1:n_events) {
+    # get event
+    event <- current_model[j, ]
+
+    # check if end_time larger than start_time
+    if (event$end_time < event$start_time) {
+        cat("\nERROR: end_time is smaller than start_time in one of provided
+            model constraints!")
+    }
+  }
 
   # set min duration to default if not set
   if (!"min_duration" %in% colnames(current_model)) {
-    current_model$min_duration <- rep(0.1, nrow(current_model))
+    current_model$min_duration <- rep(0.01, nrow(current_model))
   }
 
   # set max duration to default if not set
@@ -505,6 +535,10 @@ fit_to_constraints <- function(model_id,
     # evaluate each model
     fitness <- vector()
     for (j in 1:population) {
+      # round
+      start_time[[j]] <- round(start_time[[j]], 2)
+      end_time[[j]] <- round(end_time[[j]], 2)
+
       # create model from data
       model <- data.frame(event = current_model$event,
                           start_time = start_time[[j]],
@@ -551,6 +585,10 @@ fit_to_constraints <- function(model_id,
   # construct new models
   new_models <- list()
   for (j in 1:population) {
+    # round
+    start_time[[j]] <- round(start_time[[j]], 2)
+    end_time[[j]] <- round(end_time[[j]], 2)
+
     # create model from data
     model <- data.frame(event = current_model$event,
                         start_time = start_time[[j]],
@@ -611,6 +649,10 @@ create_first_generation <- function(current_model,
       duration <- runif(1, event$min_duration, event$max_duration)
       start <- runif(1, event$start_time, event$end_time - duration)
       end <- start + duration
+
+      # round to 2 digits
+      start <- round(start, 2)
+      end <- round(end, 2)
 
       starts <- append(starts, start)
       ends <- append(ends, end)
@@ -806,13 +848,15 @@ create_child <- function(start_time,
     # start
     rand <- runif(1)
     if (rand < mutation_rate) {
-      start[k] <- start[k] + runif(1, -mutation, mutation)
+      change <- max(0.01, runif(1, -mutation, mutation))
+      start[k] <- start[k] + change
     }
 
     # end
     rand <- runif(1)
     if (rand < mutation_rate) {
-      end[k] <- end[k] + runif(1, -mutation, mutation)
+      change <- max(0.01, runif(1, -mutation, mutation))
+      end[k] <- end[k] + change
     }
 
     if (end[k] < start[k]) {
@@ -836,11 +880,13 @@ create_child <- function(start_time,
     # start time needs to be larger than start_time
     # and lower than end_time - min_duration
     start[k] <- max(st, min(et - min_d, start[k]))
+    start[k] <- round(start[k], 2)
 
     # end time needs to be lower than end_time
     # and larger than start_time + min_duration
     # and lower than start_time + max_duration
     end[k] <- min(et, max(st + min_d, min(st + max_d, end[k])))
+    end[k] <- round(end[k], 2)
   }
 
   child <- list()
@@ -957,6 +1003,9 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
   if (is.null(ncol) && is.null(nrow)) {
     nrow <- i - 1
     ncol <- 1
+  } else if (!is.null(ncol) && !is.null(nrow)) {
+    cat("\nWARNING: Both ncol and nrow are provided, using only ncol!\n")
+    nrow <- NULL
   }
 
   # plot grid

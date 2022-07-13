@@ -10,7 +10,7 @@
 <!--
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{b_reaction_time: Bayesian reaction time model}
+  %\VignetteIndexEntry{An example about how to evaluate manually constructed models with the autohrf package}
 -->
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
