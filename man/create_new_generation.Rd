@@ -43,6 +43,6 @@ solutions) in the genetic algorithm.}
 A new generation of candidate models.
 }
 \description{
-Aa helper function for creating a new generation of possible
+A helper function for creating a new generation of possible
 solutions.
 }

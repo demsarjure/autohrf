@@ -11,7 +11,7 @@ plot_fitness(autofit)
 }
 \description{
 Plots how fitness changed through iterations of autohrf.
-Use this to invesitage whether your solution converged.
+Use this to investigate whether your solution converged.
 }
 \examples{
 # prepare model specs

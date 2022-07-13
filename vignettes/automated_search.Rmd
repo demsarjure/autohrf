@@ -1,5 +1,5 @@
 ---
-  title: "An example about how to use automamated model parameter search"
+  title: "An example about how to use automated model parameter search"
   author: "Jure Demšar, Nina Purg and Grega Repovš"
   date: "`r Sys.Date()`"
   output:
@@ -10,7 +10,7 @@
 <!--
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{An example about how to use automamated model parameter search}
+  %\VignetteIndexEntry{An example about how to use automated model parameter search}
 -->
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
