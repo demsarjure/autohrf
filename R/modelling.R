@@ -677,7 +677,7 @@ create_first_generation <- function(current_model,
 
 
 #' @title create_new_generation
-#' @description Aa helper function for creating a new generation of possible
+#' @description A helper function for creating a new generation of possible
 #' solutions.
 #' @importFrom lubridate day hour minute second seconds_to_period
 #' @import doParallel
@@ -898,7 +898,7 @@ create_child <- function(start_time,
 
 #' @title plot_fitness
 #' @description Plots how fitness changed through iterations of autohrf.
-#' Use this to invesitage whether your solution converged.
+#' Use this to investigate whether your solution converged.
 #' @import ggplot2
 #' @export
 #'
