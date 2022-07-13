@@ -1,8 +1,8 @@
 # Revisions
 
-## CRAN submission X. Y. 2022
+## CRAN submission 13. 7. 2022
 
-TODO
+Initial submission.
 
 ## Test environments
 
@@ -14,7 +14,8 @@ TODO
 
 ## R CMD check results
 
-TODO
+* 1 warning: "replacing previous import ‘stats::filter’ by ‘dplyr::filter’ when loading ‘autohrf’".
+* 1 note: "Non-standard files/directories found at top level: ‘autohrf.Rproj’ ‘cran-comments.md’".
 
 ## Downstream dependencies
 

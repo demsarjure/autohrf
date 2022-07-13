@@ -3,6 +3,7 @@
 \name{autohrf-datasets}
 \alias{autohrf-datasets}
 \alias{swm}
+\alias{swm_autofit}
 \title{Datasets for autohrf examples
 Example datasets for use in \pkg{autohrf} examples and vignettes.
 The datasets were extracted from the internal
@@ -24,6 +25,13 @@ Source: Internal MBLab repository.
 \item \code{y} BOLD value.
 }
 }
+
+\item{\code{swm_autofit}}{
+Stored results from a complete autohrf run.
+
+Source: Internal MBLab repository.
+}
+
 }
 }
 \description{
@@ -38,5 +46,8 @@ University of Ljubljana, Slovenia.
 \examples{
 # load swm data
 data_swm <- swm
+
+# load the previously completed autofit
+autofit <- swm_autofit
 
 }
