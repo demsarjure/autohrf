@@ -74,7 +74,7 @@ evaluate_model <- function(d,
 #' @title plot_model
 #' @description Plots a manually constructed model.
 #' @importFrom magrittr %>%
-#' @importFrom dplyr case_when filter mutate
+#' @importFrom dplyr case_when mutate
 #' @import ggplot2
 #' @import RColorBrewer
 #' @export

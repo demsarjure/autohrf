@@ -5,7 +5,7 @@
 library(autohrf)
 
 # set tolerance
-tol <- 0.2
+tol <- 0.5
 
 # set seed
 set.seed(27)
