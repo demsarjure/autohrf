@@ -14,7 +14,6 @@ Initial submission.
 
 ## R CMD check results
 
-* 1 warning: "replacing previous import ‘stats::filter’ by ‘dplyr::filter’ when loading ‘autohrf’".
 * 1 note: "Non-standard files/directories found at top level: ‘autohrf.Rproj’ ‘cran-comments.md’".
 
 ## Downstream dependencies

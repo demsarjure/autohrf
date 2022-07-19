@@ -74,7 +74,7 @@ evaluate_model <- function(d,
 #' @title plot_model
 #' @description Plots a manually constructed model.
 #' @importFrom magrittr %>%
-#' @importFrom dplyr case_when filter mutate
+#' @importFrom dplyr case_when mutate
 #' @import ggplot2
 #' @import RColorBrewer
 #' @export
@@ -367,8 +367,9 @@ autohrf <- function(d,
     }
   }
 
+  # setup parallelism
+  cl <- NULL
   if (cores != 1) {
-    # setup parallelism
     cl <- parallel::makeCluster(cores, outfile = "")
     doParallel::registerDoParallel(cl)
   }
@@ -392,6 +393,11 @@ autohrf <- function(d,
                                 p_spm,
                                 f,
                                 autohrf)
+  }
+
+  # close cluster
+  if (!is.null(cl)) {
+    parallel::stopCluster(cl)
   }
 
   return(results)
