@@ -368,9 +368,9 @@ autohrf <- function(d,
   }
 
   # setup parallelism
+  cl <- NULL
   if (cores != 1) {
     cl <- parallel::makeCluster(cores, outfile = "")
-    on.exit(parallel::stopCluster(cl))
     doParallel::registerDoParallel(cl)
   }
 
@@ -396,7 +396,7 @@ autohrf <- function(d,
   }
 
   # close cluster
-  if (cores != 1) {
+  if (!is.null(cl)) {
     parallel::stopCluster(cl)
   }
 
