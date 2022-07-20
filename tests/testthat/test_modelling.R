@@ -36,11 +36,16 @@ test_that("evaluate_model", {
   expect_output(evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights))
 })
 
+# evaluate_model by roi
+test_that("evaluate_model_by_roi", {
+  expect_equal(mean(em$by_roi$r2), 0.93)
+  expect_equal(mean(em$by_roi$r2w), 1.06)
+})
+
 # evaluate_model single event
 test_that("evaluate_model_single", {
   expect_output(evaluate_model(df, model_single, tr = 2.5))
 })
-
 
 # plot_model
 test_that("plot_model", {

@@ -57,7 +57,10 @@ evaluate_model <- function(d,
 
   rm <- run_model(d, ce, model, roi_weights)
 
-  em <- list(model = model, rm = rm, ce = ce, tr = tr, coefficients = rm$c)
+  by_roi <- data.frame(roi = rm$c$r, r2 = rm$c$r2, r2w = rm$c$r2w)
+
+  em <- list(model = model, rm = rm, ce = ce,
+             tr = tr, coefficients = rm$c, by_roi = by_roi)
 
   # report
   if (report) {
