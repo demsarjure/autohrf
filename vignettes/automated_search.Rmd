@@ -16,7 +16,6 @@
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 # knitr options
 knitr::opts_chunk$set(fig.width=6, fig.height=4.5)
-options(width=800)
 ```
 
 In this example we will show how you can use the **autohrf** package to automatically generate data-informed event models for GLM modeling of task-based fMRI data. Let us start this example by loading required libraries and the data from the spatial working memory experiment (SWM).

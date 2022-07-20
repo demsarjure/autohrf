@@ -21,10 +21,10 @@
 #' @param p_boynton Parameters for the Boynton's HRF.
 #' @param p_spm Parameters for the SPM HRF.
 #' @param f Upsampling factor.
-#' @param report Whether to print a report of the evaluation results.
+#' @param verbose Whether to print a report of the evaluation results.
 #'
 #' @return Returns a list that contains the model, fits of events for
-#' each ROI, convolved events and the TR.
+#' each ROI, convolved events, TR and R2 score for each ROI.
 #'
 #' @examples
 #' # create the model
@@ -44,7 +44,7 @@ evaluate_model <- function(d,
                            p_boynton = c(2.25, 1.25, 2),
                            p_spm = c(6, 16, 1, 1, 6, 0),
                            f = 100,
-                           report = TRUE) {
+                           verbose = TRUE) {
 
   ce <- autohrf::convolve_events(model = model,
                                  tr = tr,
@@ -63,7 +63,7 @@ evaluate_model <- function(d,
              tr = tr, coefficients = rm$c, by_roi = by_roi)
 
   # report
-  if (report) {
+  if (verbose) {
     cat("\nMean R2: ", rm$r2$mean)
     cat("\nMedian R2: ", rm$r2$median)
     cat("\nMin R2: ", rm$r2$min)
@@ -88,6 +88,8 @@ evaluate_model <- function(d,
 #' @param nrow Number of rows in the facet wrap.
 #' @param scales Whether to free certain axes of the facet wrap.
 #' @param rois A subset of ROIs to visualize.
+#'
+#' @return A ggplot visualization of the model.
 #'
 #' @examples
 #' # prepare model specs
@@ -313,6 +315,7 @@ run_model <- function(d,
 #' @param cores Number of cores to use for parallel processing. Set to the
 #' number of provided model constraints by default.
 #' @param autohrf Results of a previous autohrf run to continue.
+#' @param verbose Whether to print progress of the fitting process.
 #'
 #' @return A list containing model fits for each of the provided model
 #' specifications.
@@ -354,7 +357,8 @@ autohrf <- function(d,
                     p_spm = c(6, 16, 1, 1, 6, 0),
                     f = 100,
                     cores = NULL,
-                    autohrf = NULL) {
+                    autohrf = NULL,
+                    verbose = TRUE) {
 
   # parameters
   n_models <- length(model_constraints)
@@ -395,7 +399,8 @@ autohrf <- function(d,
                                 p_boynton,
                                 p_spm,
                                 f,
-                                autohrf)
+                                autohrf,
+                                verbose)
   }
 
   # close cluster
@@ -435,6 +440,7 @@ autohrf <- function(d,
 #' @param p_spm Parameters for the SPM HRF.
 #' @param f Upsampling factor.
 #' @param autohrf Results of a previous autohrf run to continue.
+#' @param verbose Whether to print progress of the fitting process.
 #'
 #' @return Returns the best model given provided constraints.
 fit_to_constraints <- function(model_id,
@@ -453,7 +459,8 @@ fit_to_constraints <- function(model_id,
                                p_boynton,
                                p_spm,
                                f,
-                               autohrf = NULL) {
+                               autohrf = NULL,
+                               verbose = TRUE) {
 
   # iterate over all models
   execution_time <- Sys.time()
@@ -536,10 +543,11 @@ fit_to_constraints <- function(model_id,
     execution_time <- Sys.time()
 
     # print
-    n_models <- length(model_constraints)
-    cat("Model:", model_id, "\t|\t",
-        "Iteration:", i, "/", iter, "\t|\t",
-        "ETA:", eta, "\n")
+    if (verbose) {
+      cat("Model:", model_id, "\t|\t",
+          "Iteration:", i, "/", iter, "\t|\t",
+          "ETA:", eta, "\n")
+    }
 
     # evaluate each model
     fitness <- vector()
@@ -562,7 +570,7 @@ fit_to_constraints <- function(model_id,
                                     t = t,
                                     p_boynton = p_boynton,
                                     p_spm = p_spm,
-                                    report = FALSE)
+                                    verbose = FALSE)
 
       fitness <- append(fitness, em$rm$r2$weighted)
     }
@@ -913,6 +921,8 @@ create_child <- function(start_time,
 #'
 #' @param autofit Output of the autohrf function.
 #'
+#' @return A ggplot visualization of fitness through time.
+#'
 #' @examples
 #' # prepare model specs
 #' model3 <- data.frame(
@@ -974,6 +984,9 @@ plot_fitness <- function(autofit) {
 #' @param ncol Number of columns in the plot.
 #' @param nrow Number of rows in the plot.
 #'
+#' @return Plots the grid containing a visualization of the best models for each
+#' of the provided constraints.
+#'
 #' @examples
 #' # prepare model specs
 #' model3 <- data.frame(
@@ -1030,6 +1043,10 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #'
 #' @param autofit Output of the autohrf function.
 #' @param return_fitness Whether to return models or fitness.
+#' @param verbose Whether to print information or only return the result.
+#'
+#' @return Returns a list containing the best models for each of the provided
+#' constraints.
 #'
 #' @examples
 #' # prepare model specs
@@ -1055,21 +1072,24 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #' # print best models
 #' get_best_models(autofit)
 #'
-get_best_models <- function(autofit, return_fitness = FALSE) {
+get_best_models <- function(autofit, return_fitness = FALSE, verbose = TRUE) {
   # best models storage
   models <- list()
   fitness <- vector()
 
   # iterate over models
   i <- 1
-  cat("\n----------------------------------------\n")
   for (af in autofit) {
-    cat("\nModel", i, "\n\n")
     models[[i]] <- af$models[[1]]
-    cat("Fitness: ", tail(af$fitness, 1), "\n\n")
     fitness <- c(fitness, tail(af$fitness, 1))
-    print(af$models[[1]])
-    cat("\n----------------------------------------\n")
+
+    if (verbose) {
+      cat("\n----------------------------------------\n")
+      cat("\nModel", i, "\n\n")
+      cat("Fitness: ", tail(af$fitness, 1), "\n\n")
+      print(af$models[[1]])
+      cat("\n----------------------------------------\n")
+    }
 
     i <- i + 1
   }

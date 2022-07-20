@@ -16,7 +16,6 @@
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 # knitr options
 knitr::opts_chunk$set(fig.width=6, fig.height=4.5)
-options(width=800)
 ```
 
 The **autohrf** package is not only useful for preparing model specifications and then automatically finding the models that best fit the underlying data. In this example we will show how you can use the **autohrf** package to investigate the quality of manually constructed models.

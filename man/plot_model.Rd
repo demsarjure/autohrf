@@ -26,6 +26,9 @@ plot_model(
 
 \item{rois}{A subset of ROIs to visualize.}
 }
+\value{
+A ggplot visualization of the model.
+}
 \description{
 Plots a manually constructed model.
 }

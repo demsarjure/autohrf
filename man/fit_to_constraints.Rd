@@ -21,7 +21,8 @@ fit_to_constraints(
   p_boynton,
   p_spm,
   f,
-  autohrf = NULL
+  autohrf = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -65,6 +66,8 @@ solutions) in the genetic algorithm.}
 \item{f}{Upsampling factor.}
 
 \item{autohrf}{Results of a previous autohrf run to continue.}
+
+\item{verbose}{Whether to print progress of the fitting process.}
 }
 \value{
 Returns the best model given provided constraints.

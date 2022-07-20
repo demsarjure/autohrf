@@ -1,8 +1,7 @@
 # autohrf change log
-
 ## autohrf 1.0.3
 
-The evaluate_model function now also returns R2 for each ROI.
+The evaluate_model function now also returns R2 for each ROI. Fixed a bug in one of the unit test. Additional minor changes to make the package CRAN compliant.
 
 ## autohrf 1.0.2
 
