@@ -21,7 +21,8 @@ autohrf(
   p_spm = c(6, 16, 1, 1, 6, 0),
   f = 100,
   cores = NULL,
-  autohrf = NULL
+  autohrf = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -66,6 +67,8 @@ solutions) in the genetic algorithm.}
 number of provided model constraints by default.}
 
 \item{autohrf}{Results of a previous autohrf run to continue.}
+
+\item{verbose}{Whether to print progress of the fitting process.}
 }
 \value{
 A list containing model fits for each of the provided model

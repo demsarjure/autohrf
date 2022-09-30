@@ -4,12 +4,18 @@
 \alias{get_best_models}
 \title{get_best_models}
 \usage{
-get_best_models(autofit, return_fitness = FALSE)
+get_best_models(autofit, return_fitness = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{autofit}{Output of the autohrf function.}
 
 \item{return_fitness}{Whether to return models or fitness.}
+
+\item{verbose}{Whether to print information or only return the result.}
+}
+\value{
+Returns a list containing the best models for each of the provided
+constraints.
 }
 \description{
 Returns and prints the best fitted model for each of the specs

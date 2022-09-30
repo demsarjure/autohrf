@@ -13,6 +13,10 @@ plot_best_models(autofit, ncol = NULL, nrow = NULL)
 
 \item{nrow}{Number of rows in the plot.}
 }
+\value{
+Plots the grid containing a visualization of the best models for each
+of the provided constraints.
+}
 \description{
 Plots the best fitted model for each of the specs in autohrf.
 }

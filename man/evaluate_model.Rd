@@ -14,7 +14,7 @@ evaluate_model(
   p_boynton = c(2.25, 1.25, 2),
   p_spm = c(6, 16, 1, 1, 6, 0),
   f = 100,
-  report = TRUE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -41,11 +41,11 @@ will be twice as important.}
 
 \item{f}{Upsampling factor.}
 
-\item{report}{Whether to print a report of the evaluation results.}
+\item{verbose}{Whether to print a report of the evaluation results.}
 }
 \value{
 Returns a list that contains the model, fits of events for
-each ROI, convolved events and the TR.
+each ROI, convolved events, TR, R2 and BIC scores for each ROI.
 }
 \description{
 A function for evaluating the model against the data.

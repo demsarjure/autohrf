@@ -9,6 +9,9 @@ plot_fitness(autofit)
 \arguments{
 \item{autofit}{Output of the autohrf function.}
 }
+\value{
+A ggplot visualization of fitness through time.
+}
 \description{
 Plots how fitness changed through iterations of autohrf.
 Use this to investigate whether your solution converged.
