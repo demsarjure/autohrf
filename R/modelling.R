@@ -24,7 +24,7 @@
 #' @param verbose Whether to print a report of the evaluation results.
 #'
 #' @return Returns a list that contains the model, fits of events for
-#' each ROI, convolved events, TR and R2 score for each ROI.
+#' each ROI, convolved events, TR and evaluation scores for each ROI.
 #'
 #' @examples
 #' # create the model
@@ -57,7 +57,8 @@ evaluate_model <- function(d,
 
   rm <- run_model(d, ce, model, roi_weights)
 
-  by_roi <- data.frame(roi = rm$c$r, r2 = rm$c$r2, r2w = rm$c$r2w)
+  by_roi <- data.frame(roi = rm$c$r, r2 = rm$c$r2, r2w = rm$c$r2w,
+                       bic = rm$c$bic, bicw = rm$c$bicw)
 
   em <- list(model = model, rm = rm, ce = ce,
              tr = tr, coefficients = rm$c, by_roi = by_roi)
@@ -67,7 +68,11 @@ evaluate_model <- function(d,
     cat("\nMean R2: ", rm$r2$mean)
     cat("\nMedian R2: ", rm$r2$median)
     cat("\nMin R2: ", rm$r2$min)
-    cat("\nWeighted R2: ", rm$r2$weighted, "\n")
+    cat("\nWeighted R2: ", rm$r2$weighted)
+    cat("\n\nMean BIC: ", rm$bic$mean)
+    cat("\nMedian BIC: ", rm$bic$median)
+    cat("\nMin BIC: ", rm$bic$min)
+    cat("\nWeighted BIC: ", rm$bic$weighted, "\n")
   }
 
   return(em)
@@ -250,12 +255,20 @@ run_model <- function(d,
     # calculate r2w
     r2w <- r2 * roi_weights[roi_weights$roi == roi, "weight"]
 
+    # calculate bic
+    bic <- BIC(m)
+
+    # calculate bicw
+    bicw <- bic * roi_weights[roi_weights$roi == roi, "weight"]
+
     coeffs <-
       rbind(coeffs,
             data.frame(c(r = roi,
                        as.list(m$coefficients[events]),
                        r2 = r2,
-                       r2w = r2w)))
+                       r2w = r2w,
+                       bic = bic,
+                       bicw = bicw)))
   }
 
   for (v in c("y", events, "y_m")) {
@@ -270,13 +283,21 @@ run_model <- function(d,
   # weighted r2
   r2w <- sum(coeffs$r2w) / sum(roi_weights$weight)
 
-  # store r2
-  r2 <- list(mean = mean(coeffs$r2),
-             median = median(coeffs$r2),
-             min = min(coeffs$r2),
-             weighted = r2w)
+  # weighted r2
+  bicw <- sum(coeffs$bicw) / sum(roi_weights$weight)
 
-  return(list(fit = fit, d = d, c = coeffs, r2 = r2, events = events))
+  # store evaluation
+  r2 <- list(mean = mean(coeffs$r2),
+               median = median(coeffs$r2),
+               min = min(coeffs$r2),
+               weighted = r2w)
+
+  bic <- list(mean = mean(coeffs$bic),
+               median = median(coeffs$bic),
+               min = min(coeffs$bic),
+               weighted = bicw)
+
+  return(list(fit = fit, d = d, c = coeffs, r2 = r2, bic = bic, events = events))
 }
 
 

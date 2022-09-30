@@ -45,7 +45,7 @@ will be twice as important.}
 }
 \value{
 Returns a list that contains the model, fits of events for
-each ROI, convolved events, TR and R2 score for each ROI.
+each ROI, convolved events, TR, R2 and BIC scores for each ROI.
 }
 \description{
 A function for evaluating the model against the data.

@@ -40,6 +40,8 @@ test_that("evaluate_model", {
 test_that("evaluate_model_by_roi", {
   expect_equal(mean(em$by_roi$r2), 0.93, tolerance = tol)
   expect_equal(mean(em$by_roi$r2w), 1.06, tolerance = tol)
+  expect_equal(mean(em$by_roi$bic), 102.77, tolerance = tol)
+  expect_equal(mean(em$by_roi$bicw), 116.50, tolerance = tol)
 })
 
 # evaluate_model single event
