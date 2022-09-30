@@ -1,5 +1,9 @@
 # Revisions
 
+## CRAN submission 30. 9. 2022
+
+A minor upgrade to one of the functionalities of the package.
+
 ## CRAN submission 13. 7. 2022
 
 Initial submission.
