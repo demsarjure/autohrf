@@ -14,11 +14,11 @@ University of Ljubljana, Slovenia.}
 \format{
 \describe{
 \item{\code{swm}}{
-fMRI dataset for a spatial working memory experiment.
+fMRI dataset for the spatial working memory study.
 
 Source: Internal MBLab repository.
 
-504 obs. of 3 variables
+11520 obs. of 3 variables
 \itemize{
 \item \code{roi} region of interest.
 \item \code{time} time stamp.
@@ -26,14 +26,24 @@ Source: Internal MBLab repository.
 }
 }
 
-\item{\code{swm_autofit}}{
-Stored results from a complete autohrf run.
+\item{\code{swm_autofit1}}{
+Stored results from a complete autohrf run for a model with three event predictors.
 
 Source: Internal MBLab repository.
 }
 
 }
 }
+
+\item{\code{swm_autofit2}}{
+Stored results from a complete autohrf run for a model with four events predictors.
+
+Source: Internal MBLab repository.
+}
+
+}
+}
+
 \description{
 Datasets for autohrf examples
 Example datasets for use in \pkg{autohrf} examples and vignettes.
@@ -48,6 +58,7 @@ University of Ljubljana, Slovenia.
 data_swm <- swm
 
 # load the previously completed autofit
-autofit <- swm_autofit
+autofit1 <- swm_autofit1
+autofit2 <- swm_autofit2
 
 }
