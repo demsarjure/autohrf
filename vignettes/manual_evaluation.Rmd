@@ -1,6 +1,6 @@
 ---
-  title: "An example about how to evaluate manually constructed models with the autohrf package"
-  author: "Jure Demšar, Nina Purg and Grega Repovš"
+  title: "An example on how to evaluate manually constructed event models"
+  author: "Nina Purg, Jure Demšar and Grega Repovš"
   date: "`r Sys.Date()`"
   output:
     html_vignette:
@@ -10,7 +10,7 @@
 <!--
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{An example about how to evaluate manually constructed models with the autohrf package}
+  %\VignetteIndexEntry{An example on how to evaluate manually constructed event models}
 -->
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -18,12 +18,12 @@
 knitr::opts_chunk$set(fig.width=6, fig.height=4.5)
 ```
 
-The **autohrf** package is not only useful for preparing model specifications and then automatically finding the models that best fit the underlying data. In this example we will show how you can use the **autohrf** package to investigate the quality of manually constructed models.
+The **autohrf** package is not only useful for preparing model specifications and then automatically finding the models that best fit the underlying data. In this example we show how you can use the **autohrf** package to investigate the quality of manually constructed models.
 
-Let us start this example by loading required libraries and the data from the spatial working memory experiment (SWM).
+Let us start this example by loading required libraries and the data from the spatial working memory study.
 
 ```{r}
-# libs
+# libraries
 library(autohrf)
 
 # load the data
@@ -31,44 +31,41 @@ df <- swm
 head(df)
 ```
 
-The loaded data frame has 504 observations, each with 3 variables (roi, t, and y) **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
+The loaded data frame has 11520 observations, each with 3 variables (roi, t, and y) **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
 
-Next, we will construct three different models, one with 3 events, one with 4 events and one with 5 events. When manually constructing events we need to create a data frame which has an entry (observation) for each of the events in the model. For each of the events we need to provide its name, its start time and its duration.
+Next, we construct three different models, one with three events, one with four events and one with five events. When manually constructing event models we need to create a data frame which has an entry (observation) for each of the events in the model. For each of the events we need to provide its name, its start time and its duration.
 
 ```{r}
-# 3 events: encoding, delay, response
-model3 <- data.frame(event      = c("encoding", "delay", "response"),
-                     start_time = c(0,           2.65,    12.5),
-                     duration   = c(2.65,        9.85,    3))
+# a model with three event predictors
+model1 <- data.frame(event = c("encoding", "delay", "response"),
+                     start_time = c(0, 0.15, 10),
+                     duration = c(0.15, 9.85, 3))
 
-# 4 events: fixation, target, delay, response
-model4 <- data.frame(event      = c("fixation", "target", "delay", "response"),
-                     start_time = c(0,           2.5,      2.65,    12.5),
-                     duration   = c(2.5,         0.1,      9.85,    3))
+# a model with four event predictors
+model2 <- data.frame(event = c("encoding", "delay", "probe", "response"),
+                     start_time = c(0, 0.15, 10, 10.5),
+                     duration = c(0.15, 9.85, 0.5, 2.5))
 
-# 5 events: fixation, target, delay, probe, response
-model5 <- data.frame(event      = c("fixation", "target", "delay", "probe", "response"),
-                     start_time = c(0,           2.5,      2.65,    12.5,    13),
-                     duration   = c(2.5,         0.1,      9.85,    0.5,     2.5))
+# a model with five event predictors
+model3 <- data.frame(event = c("stimulus", "encoding", "delay", "probe", "response"),
+                     start_time = c(0, 0.15, 2, 10, 10.5),
+                     duration = c(0.15, 1.85, 8, 0.5, 2.5))
 ```
 
-Once we construct our models we can use the **convolve_events** function to convolve the HRF signal based on the model with the actual data. Once we have that, we can use the **run_model** function to evaluate which model fits our data best. We can also use the **plot_model** function to visually inspect how model fits the underlying data.
+Once we construct our models we can use the **evaluate_model** function to obtain the model fitness to the measured data.
 
 ```{r}
-# 3 events
-em3 <- evaluate_model(df, model3, tr = 2.5)
+# evaluate models
+em1 <- evaluate_model(df, model1, tr = 1)
+em2 <- evaluate_model(df, model2, tr = 1)
+em3 <- evaluate_model(df, model3, tr = 1)
+```
+
+We can also use the **plot_model** function to visually inspect how model fits the underlying data.
+
+```{r}
+# plot models fit to the data
+plot_model(em1)
+plot_model(em2)
 plot_model(em3)
 ```
-
-```{r}
-# 4 events
-em4 <- evaluate_model(df, model4, tr = 2.5)
-plot_model(em4)
-```
-
-```{r}
-em5 <- evaluate_model(df, model5, tr = 2.5)
-plot_model(em5)
-```
-
-We can see that the best R2 score was achieved by our model with 5 events. So it would make sense to use that one for further assumed GLM modelling.

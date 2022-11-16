@@ -1,6 +1,6 @@
 ---
-  title: "An example about how to use automated model parameter search"
-  author: "Jure Demšar, Nina Purg and Grega Repovš"
+  title: "An example on how to use automated model parameter search"
+  author: "Nina Purg, Jure Demšar and Grega Repovš"
   date: "`r Sys.Date()`"
   output:
     html_vignette:
@@ -10,7 +10,7 @@
 <!--
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{An example about how to use automated model parameter search}
+  %\VignetteIndexEntry{An example on how to use automated model parameter search}
 -->
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -18,10 +18,10 @@
 knitr::opts_chunk$set(fig.width=6, fig.height=4.5)
 ```
 
-In this example we will show how you can use the **autohrf** package to automatically generate data-informed event models for GLM modeling of task-based fMRI data. Let us start this example by loading required libraries and the data from the spatial working memory experiment (SWM).
+In this example we show how you can use the **autohrf** package to automatically generate data-informed event models for general linear modeling of task-based fMRI data. Let us start this example by loading required libraries and the data from the spatial working memory study.
 
 ```{r}
-# libs
+# libraries
 library(autohrf)
 
 # load the data
@@ -29,41 +29,52 @@ df <- swm
 head(df)
 ```
 
-The loaded data frame has 504 observations, each with 3 variables (roi, t, and y) **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
+The loaded data frame has 11520 observations, each with 3 variables (roi, t, and y) **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. Note that input data for the **autohrf** package should be always organized in this manner.
 
-Next, we will define two different model constraints which the **autohrf** function will use to find the best fitting model given these constraints. Note that this is only an illustrative example and the set amount of the population size and iterations of the genetic algorithm is way too small for any kind of proper analysis.
+Next, we define two different model constraints, which will be used by the **autohrf** function to find the best fitting model given these constraints.
 
 ```{r}
-# 2 events: delay, response
-model2 <- data.frame(event = c("delay", "response"),
-                     start_time = c(0, 10),
-                     end_time = c(10, 15))
+# model constraints for three event predictors
+model1 <- data.frame(event = c("encoding", "delay", "response"),
+                     start_time = c(0, 0.15, 10),
+                     end_time = c(0.15, 10, 13))
 
-# 3 events: encoding, delay, response
-model3 <- data.frame(event = c("encoding", "delay", "response"),
-                     start_time = c(0, 0, 10),
-                     end_time = c(0.5, 10, 15))
+# model constraints for four event predictors
+model2 <- data.frame(event = c("encoding", "early_delay", "late_delay", "response"),
+                     start_time = c(0, 0.15, 5, 10),
+                     end_time = c(0.15, 5, 10, 13))
+
+# join different model constraints
+models <- list(model1, model2)
 ```
 
-Once we define the model constraints we can use the  our models we can use the **autohrf** function to automatically find model parameters that fit our data best.
+Once we define the constraints for our models we can use the **autohrf** function to automatically find model parameters that fit our data best. Note that this is only an illustrative example and the set amount of the population size and iterations of the genetic algorithm is way too small for any kind of proper analysis.
 
 ```{r}
-model_constraints <- list(model2, model3)
 # to speed vignette building we here load results from a previous autohrf run
 autofit <- swm_autofit
 
 # in practice you should run
-#autofit <- autohrf(df, model_constraints, tr = 2.5)
+# autofit <- autohrf(df, models, tr = 1, population = 10, iter = 10)
 ```
 
-When the automated fitting process is completed, we can use the **get_best_models** function to extract the best model for each of the provided constraints.
+When the automated fitting process is completed, we can use the **plot_fitness** function to check whether our model solutions converged.
 
 ```{r}
+# plot models' fitness across iterations
+plot_fitness(autofit)
+```
+
+Next, we can use the **get_best_models** function to extract the best model for each of the provided constraints.
+
+```{r}
+# return automatically derived parameters
 best <- get_best_models(autofit)
 ```
 
-Based on calculated fitness scores we can see that the second model fits our data better. Furthermore, we can use the **plot_best_models** function to visually analyze the best models.
+Based on calculated fitness scores we can see that the second model fits our data better. Furthermore, we can use the **plot_best_models** function to visually inspect the best models.
 
 ```{r}
+# visualize automatically derived parameters
 plot_best_models(autofit)
 ```
