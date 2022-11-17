@@ -34,7 +34,7 @@ head(df)
 
 The loaded data frame has 11520 observations, which correspond to the fMRI measurements for 360 different brain areas over 32 time points during a spatial working memory task trial. The fMRI data has been averaged for individual voxels within each region of interest (ROI), across individual task trials collected in one to three recording sessions per each participant, and across 37 participants. Each observation has three variables (roi, t, and y), where **roi** denotes the region of interest, **t** the time stamp and **y** the value of the BOLD signal. 
 
-To visualize the data we select six ROIs with different types of activity during a spatial working memory task and plot their mean activity during a task trial.
+To visualize the data we select six ROIs with different types of activity during the spatial working memory task and plot their mean activity during a task trial.
 
 ```{r}
 # prepare relevant ROIs for visualization
@@ -142,10 +142,10 @@ plot_fitness(autofit1) +
 # plot regressors
 plot_best_models(autofit1)
 
-#" return derived parameters
+# return derived parameters
 best_models <- get_best_models(autofit1)
 
-#" evaluate models
+# evaluate models
 modelA <- best_models[[1]]
 emA <- evaluate_model(df, modelA, tr = 1, hrf = "spm")
 plot_model(emA, by_roi = TRUE, rois = roisv, nrow = 1)
@@ -193,7 +193,7 @@ plot_fitness(autofit2) +
 # plot regressors
 plot_best_models(autofit2)
 
-#" return derived parameters
+# return derived parameters
 best_models <- get_best_models(autofit2)
 
 # evaluate models
