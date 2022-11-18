@@ -427,8 +427,6 @@ autohrf <- function(d,
   # close cluster
   if (!is.null(cl)) {
     parallel::stopCluster(cl)
-    env <- foreach:::.foreachGlobals
-    rm(list=ls(name=env), pos=env)
   }
 
   return(results)

@@ -1,5 +1,9 @@
 # Revisions
 
+## CRAN submission 18. 11. 2022
+
+Added additional vignettes and sorted out DESCRIPTION file so there are 0 notes.
+
 ## CRAN submission 30. 9. 2022
 
 A minor upgrade to one of the functionalities of the package.
