@@ -45,7 +45,7 @@ will be twice as important.}
 }
 \value{
 Returns a list that contains the model, fits of events for
-each ROI, convolved events, TR, R2 and BIC scores for each ROI.
+each ROI, convolved events, TR and evaluation scores for each ROI.
 }
 \description{
 A function for evaluating the model against the data.
@@ -56,7 +56,7 @@ m <- data.frame(event = c("encoding", "delay", "response"),
 start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 
 # evaluate
-df <- swm
+df <- flanker
 res <- evaluate_model(df, m, tr = 2.5)
 
 }

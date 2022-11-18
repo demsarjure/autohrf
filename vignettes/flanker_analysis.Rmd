@@ -32,7 +32,7 @@ df <- flanker
 head(df)
 ```
 
-The loaded data frame has 192 observations, which correspond to the fMRI measurements for six clusters of brain areas over 32 time points during the flanker task trial. The fMRI data has been averaged for individual voxels within each region of interest (ROI) and additionally within each ROI cluster, across task trials, and across 30 participants. Each observation has three variables (roi, t, and y), where **roi** denotes the ROI cluster, **t** the time stamp and **y** the value of the BOLD signal. 
+The loaded data frame has 192 observations, which correspond to the fMRI measurements for six clusters of brain areas over 32 time points during the flanker task trial. The fMRI data has been averaged for individual voxels within each region of interest (ROI) and additionally within each ROI cluster, across task trials, and across 30 participants. Each observation has three variables (roi, t, and y), where **roi** denotes the ROI cluster, **t** the time stamp and **y** the value of the BOLD signal.
 
 To visually inspect the data we plot the average activity during a single trial of the flanker task for all six ROI clusters.
 

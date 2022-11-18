@@ -32,7 +32,7 @@
 #' start_time = c(0, 2.5, 12.5), duration = c(2.5, 10, 5))
 #'
 #' # evaluate
-#' df <- swm
+#' df <- flanker
 #' res <- evaluate_model(df, m, tr = 2.5)
 #'
 evaluate_model <- function(d,
@@ -358,7 +358,7 @@ run_model <- function(d,
 #' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
-#' df <- swm
+#' df <- flanker
 #' autofit <- autohrf(df, model_constraints, tr = 2.5,
 #'                    population = 2, iter = 2, cores = 1)
 #'
@@ -427,6 +427,8 @@ autohrf <- function(d,
   # close cluster
   if (!is.null(cl)) {
     parallel::stopCluster(cl)
+    env <- foreach:::.foreachGlobals
+    rm(list=ls(name=env), pos=env)
   }
 
   return(results)
@@ -961,7 +963,7 @@ create_child <- function(start_time,
 #' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
-#' df <- swm
+#' df <- flanker
 #' autofit <- autohrf(df, model_constraints, tr = 2.5,
 #'                    population = 2, iter = 2, cores = 1)
 #'
@@ -1025,7 +1027,7 @@ plot_fitness <- function(autofit) {
 #' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
-#' df <- swm
+#' df <- flanker
 #' autofit <- autohrf(df, model_constraints, tr = 2.5,
 #'                    population = 2, iter = 2, cores = 1)
 #'
@@ -1086,7 +1088,7 @@ plot_best_models <- function(autofit, ncol = NULL, nrow = NULL) {
 #' model_constraints <- list(model3, model4)
 #'
 #' # run autohrf
-#' df <- swm
+#' df <- flanker
 #' autofit <- autohrf(df, model_constraints, tr = 2.5,
 #'                    population = 2, iter = 2, cores = 1)
 #'

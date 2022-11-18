@@ -1,5 +1,9 @@
 # autohrf change log
 
+## autohrf 1.1.0
+
+Added vignettes and data based on the published manuscript.
+
 ## autohrf 1.0.4
 
 Added BIC measures to model evaluation outputs.

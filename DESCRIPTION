@@ -1,7 +1,7 @@
 Package: autohrf
 Type: Package
 Title: Automated Generation of Data-Informed GLM Models in Task-Based fMRI Data Analysis
-Version: 1.0.4
+Version: 1.1.0
 Authors@R:
     c(person("Jure", "Demšar", , "jure.demsar@fri.uni-lj.si", c("cre", "aut")),
     person("Nina", "Purg", , "nina.purg@ff.uni-lj.si", c("aut")),
@@ -28,3 +28,5 @@ VignetteBuilder: knitr
 RoxygenNote: 7.2.0
 URL: https://github.com/demsarjure/autohrf
 BugReports: https://github.com/demsarjure/autohrf/issues
+Depends: 
+    R (>= 2.10)

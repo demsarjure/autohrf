@@ -11,7 +11,7 @@ tol <- 0.5
 set.seed(27)
 
 # load data
-df <- swm
+df <- flanker
 
 # evaluate_model ---------------------------------------------------------------
 # 3 events
@@ -26,7 +26,7 @@ model_single <- data.frame(event      = c("encoding"),
 
 # set some weights
 roi_weights <-
-  data.frame(roi = c("L_LIPv_ROI", "L_SCEF_ROI", "R_p32pr_ROI"),
+  data.frame(roi = c("1", "2", "3"),
              weight = c(2, 2, 4))
 
 em <- evaluate_model(df, model, tr = 2.5, roi_weights = roi_weights)
@@ -38,10 +38,10 @@ test_that("evaluate_model", {
 
 # evaluate_model by roi
 test_that("evaluate_model_by_roi", {
-  expect_equal(mean(em$by_roi$r2), 0.93, tolerance = tol)
-  expect_equal(mean(em$by_roi$r2w), 1.06, tolerance = tol)
-  expect_equal(mean(em$by_roi$bic), 102.77, tolerance = tol)
-  expect_equal(mean(em$by_roi$bicw), 116.50, tolerance = tol)
+  expect_equal(mean(em$by_roi$r2), 0.28, tolerance = tol)
+  expect_equal(mean(em$by_roi$r2w), 0.43, tolerance = tol)
+  expect_equal(mean(em$by_roi$bic), 236.62, tolerance = tol)
+  expect_equal(mean(em$by_roi$bicw), 446.47, tolerance = tol)
 })
 
 # evaluate_model single event
@@ -89,8 +89,8 @@ autofit <- autohrf(df,
 
 # autohrf
 test_that("autohrf", {
-  expect_equal(mean(autofit[[1]]$fitness), 0.9, tolerance = tol)
-  expect_equal(mean(autofit[[2]]$fitness), 0.9, tolerance = tol)
+  expect_equal(mean(autofit[[1]]$fitness), 0.26, tolerance = tol)
+  expect_equal(mean(autofit[[2]]$fitness), 0.27, tolerance = tol)
 })
 
 # autohrf_parallel
@@ -101,8 +101,8 @@ test_that("autohrf_parallel", {
                        population = 2,
                        iter = 2,
                        cores = 2)
-  expect_equal(mean(autofit_p[[1]]$fitness), 0.9, tolerance = tol)
-  expect_equal(mean(autofit_p[[2]]$fitness), 0.9, tolerance = tol)
+  expect_equal(mean(autofit_p[[1]]$fitness), 0.30, tolerance = tol)
+  expect_equal(mean(autofit_p[[2]]$fitness), 0.32, tolerance = tol)
 })
 
 # plot_best_models
