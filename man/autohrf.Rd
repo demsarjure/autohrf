@@ -95,7 +95,7 @@ model4 <- data.frame(
 model_constraints <- list(model3, model4)
 
 # run autohrf
-df <- swm
+df <- flanker
 autofit <- autohrf(df, model_constraints, tr = 2.5,
                    population = 2, iter = 2, cores = 1)
 

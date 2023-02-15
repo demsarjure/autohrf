@@ -28,7 +28,7 @@ model4 <- data.frame(
 model_constraints <- list(model3, model4)
 
 # run autohrf
-df <- swm
+df <- flanker
 autofit <- autohrf(df, model_constraints, tr = 2.5,
                    population = 2, iter = 2, cores = 1)
 
@@ -42,7 +42,7 @@ test_that("convolve_events", {
   ce <- convolve_events(m, tr = 2.5, max(df$t))
 
   # test
-  expect_equal(mean(ce), 0.124, tolerance = tol)
+  expect_equal(mean(ce), 0.065, tolerance = tol)
 })
 
 # plot_events
