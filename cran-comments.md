@@ -1,5 +1,9 @@
 # Revisions
 
+## CRAN submission 15. 2. 2023
+
+Removed the tidyverse Suggests, it was unnecessary, used subpackages from it are already listed under Imports.
+
 ## CRAN submission 18. 11. 2022
 
 Added additional vignettes and sorted out DESCRIPTION file so there are 0 notes.

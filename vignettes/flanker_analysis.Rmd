@@ -24,8 +24,10 @@ We start the analysis by loading relevant libraries and the fMRI data collected 
 
 ```{r}
 # libraries
-library(tidyverse)
 library(autohrf)
+library(dplyr)
+library(ggplot2)
+library(magrittr)
 
 # load data
 df <- flanker

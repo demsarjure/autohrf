@@ -1,5 +1,13 @@
 # autohrf change log
 
+## autohrf 1.1.2
+
+Removed tidyverse usage from vignettes.
+
+## autohrf 1.1.1
+
+Removed tidyverse from Suggests as used functionalites are imported from its subpackages as well.
+
 ## autohrf 1.1.0
 
 Added vignettes and data based on the published manuscript.
