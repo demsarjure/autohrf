@@ -48,5 +48,5 @@ test_that("convolve_events", {
 # plot_events
 test_that("plot_events", {
   plot <- plot_events(autofit[[1]])
-  expect_equal(length(plot), 9)
+  expect_s3_class(plot, "ggplot")
 })
