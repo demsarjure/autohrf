@@ -1,5 +1,9 @@
 # Revisions
 
+## CRAN submission 16. 1. 2024
+
+Made an update that made the package compatible with the new ggplot that is coming out soon. The patch is backwards compatible.
+
 ## CRAN submission 15. 2. 2023
 
 Removed the tidyverse Suggests, it was unnecessary, used subpackages from it are already listed under Imports.
