@@ -52,13 +52,13 @@ test_that("evaluate_model_single", {
 # plot_model
 test_that("plot_model", {
   plot <- plot_model(em)
-  expect_equal(length(plot), 9)
+  expect_s3_class(plot, "ggplot")
 })
 
 # plot_model by roi
 test_that("plot_model_by_roi", {
   plot <- plot_model(em, by_roi = TRUE)
-  expect_equal(length(plot), 9)
+  expect_s3_class(plot, "ggplot")
 })
 
 # autohrf ----------------------------------------------------------------------
@@ -108,7 +108,7 @@ test_that("autohrf_parallel", {
 # plot_best_models
 test_that("plot_best_models", {
   plot <- plot_best_models(autofit)
-  expect_equal(length(plot), 9)
+  expect_s3_class(plot, "ggplot")
 })
 
 # get_best_models_return_fitness
