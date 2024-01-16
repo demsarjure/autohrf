@@ -1,5 +1,9 @@
 # autohrf change log
 
+## autohrf 1.1.3
+
+Fixed tests so they will work with the latest version of ggplot.
+
 ## autohrf 1.1.2
 
 Removed tidyverse usage from vignettes.
